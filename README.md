@@ -1,12 +1,14 @@
-=======
-VPC in AWS
-=======
+
+## VPC in AWS
+
 
 This repo shows examples of AWS options for configuring VPC and allowing network traffic to internet
-and other services
+and other services. Using two examples:
 
+1) Deploying flask application in ec2 instance and communicating with RDS in same VPC
+2) Communicating betweein Redshift and RDS DB in separate VPC 
 
-#### AWS VPC Basics
+### AWS VPC Basics
 
 A VPC is basically a virtual network segment that is provided to AWS customers in our cloud, similar to a traditional
 network that you'd operate in your on-prem infra or data center [1]. Naturally, a network would come with subnets which are
@@ -56,7 +58,7 @@ There are two types of VPC endpoints, namely Interface endpoints and Gateway end
 services hosted by other AWS customers and partners in their own Amazon VPCs (referred to as endpoint services),
 and supported AWS Marketplace partner services.
 
- Now, further access for IP's is controlled individually at each instance level by means of Security Group (SG).
+Now, further access for IP's is controlled individually at each instance level by means of Security Group (SG).
 SG's are discussed in reference [5]
 
 References:
@@ -68,8 +70,17 @@ References:
 [5] https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
 
 
-Credits
--------
+### Installing virtual env requirements
+
+
+
+
+### Cloudformation
+
+
+
+
+### Credits
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
