@@ -61,13 +61,12 @@ and supported AWS Marketplace partner services.
 Now, further access for IP's is controlled individually at each instance level by means of Security Group (SG).
 SG's are discussed in reference [5]
 
-References:
-
-[1] https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html
-[2] https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html
-[3] https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html
-[4] https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html
-[5] https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+#### References
+1) https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html 
+2) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html
+3) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html 
+4) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html 
+5) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
 
 
 ### Installing virtual env requirements
