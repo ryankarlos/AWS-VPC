@@ -1,0 +1,170 @@
+Mappings:
+    oracle:
+      EngineVersion:
+        ver: "12.1.0.2.v4"
+      InstanceType:
+        inst: "db.t4g.medium"
+      InstanceID:
+        id: "oracle-default"
+    postgres:
+      EngineVersion:
+        ver: "14.1"
+      InstanceType:
+        inst: "db.t4g.medium"
+      InstanceID:
+        id: "postgres-default"
+    mysql:
+      EngineVersion:
+        ver: "8.0.23"
+      InstanceType:
+        inst: "db.t4g.medium"
+      InstanceID:
+        id: "mysql-default"
+Parameters:
+  DBName:
+    Default: dev
+    Description: My database
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
+  DBUsername:
+    Description: Username for database access
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  DBPassword:
+    Description: Password database access
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters.
+  DBEngine:
+    Default: postgres
+    Description: db engine e.g. postgres, mysql, mariadb, sqlserver
+    Type: String
+    AllowedValues:
+      - mysql
+      - postgres
+      - oracle-se
+  DBAllocatedStorage:
+    Default: '20'
+    Description: The size of the database (GiB)
+    Type: Number
+    MinValue: '20'
+    MaxValue: '50'
+    ConstraintDescription: must be between 20 and 50 GiB.
+  ClientIP:
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: "It must be a valid IP CIDR range of the form x.x.x.x/x. Suggest to enable access to your IP address only. Pls get your address using checkip.amazonaws.com or whatsmyip.org."
+    Description: "The IP address range that can be used to connect to the RDS instances from your local machine.It must be a valid IP CIDR range of the form x.x.x.x/x.Pls get your address using checkip.amazonaws.com or whatsmyip.org"
+    Type: "String"
+Conditions:
+  CreatePostgres: !Equals
+    - !Ref DBEngine
+    - postgres
+  CreateOracle: !Equals
+    - !Ref DBEngine
+    - oracle-se
+  CreateMySQL: !Equals
+    - !Ref DBEngine
+    - mysql
+Resources:
+  DefaultInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Condition: CreatePostgres
+    Properties:
+      DBInstanceIdentifier:
+         Fn::FindInMap: [ "postgres", "InstanceID", "id" ]
+      DBName: !Ref DBName
+      DBInstanceClass:
+        Fn::FindInMap: [  "postgres", "InstanceType", "inst" ]
+      AllocatedStorage: !Ref DBAllocatedStorage
+      Engine: !Ref DBEngine
+      EngineVersion:
+         Fn::FindInMap: [ "postgres", "EngineVersion", "ver" ]
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      StorageType: "gp2"
+      PubliclyAccessible: "true"
+      VPCSecurityGroups: !Ref "DBSecurityGroup"
+      DBSubnetGroupName: !Ref "DBSubnetGroup"
+  RDSOracleInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Condition: CreateOracle
+    Properties:
+      DBInstanceIdentifier:
+        Fn::FindInMap: ["oracle", "InstanceID", "id" ]
+      DBName: !Ref DBName
+      DBInstanceClass:
+        Fn::FindInMap: [ "oracle", "InstanceType", "inst" ]
+      AllocatedStorage: !Ref DBAllocatedStorage
+      Engine: !Ref DBEngine
+      EngineVersion:
+        Fn::FindInMap: [ "oracle", "EngineVersion", "ver" ]
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      StorageType: "gp2"
+      PubliclyAccessible: "true"
+      VPCSecurityGroups: !Ref "DBSecurityGroup"
+      DBSubnetGroupName: !Ref "DBSubnetGroup"
+      LicenseModel: "bring-your-own-license"
+  RDSMySQLInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Condition: CreateMySQL
+    Properties:
+      DBInstanceIdentifier:
+        Fn::FindInMap: [ "mysql", "InstanceID", "id" ]
+      DBName: !Ref DBName
+      DBInstanceClass:
+        Fn::FindInMap: [ "mysql", "InstanceType", "inst" ]
+      AllocatedStorage: !Ref DBAllocatedStorage
+      Engine: !Ref DBEngine
+      EngineVersion:
+        Fn::FindInMap: [ "mysql", "EngineVersion", "ver" ]
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      StorageType: "gp2"
+      PubliclyAccessible: "true"
+      DBSecurityGroups: !Ref "DBSecurityGroup"
+      DBSubnetGroupName: !Ref "DBSubnetGroup"
+  DBSubnetGroup:
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties:
+      SubnetIds:
+        - Fn::GetAtt:
+            - NestedVPCStack
+            - Outputs.PublicSubnet1
+        - Fn::GetAtt:
+            - NestedVPCStack
+            - Outputs.PublicSubnet2
+        - Fn::GetAtt:
+            - NestedVPCStack
+            - Outputs.DefaultPrivate
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Fn::GetAtt:
+          - NestedVPCStack
+          - Outputs.VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref ClientIP
+        - IpProtocol: icmp
+          FromPort: 8
+          ToPort: -1
+          CidrIp: !Ref ClientIP
+      SecurityGroupEgress:
+        - CidrIp: !Ref ClientIP
+          IpProtocol: "-1"
+  NestedVPCStack:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: >-
+         https://s3.amazonaws.com/cloudformation-templates-us-east-1/VPC-stack.template
