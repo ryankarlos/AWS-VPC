@@ -1,0 +1,187 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Security groups and subnets"
+Resources:
+  VPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: "10.192.0.0/16"
+      Tags:
+        - Key: Name
+          Value: vpc-ec2-rds-redshift
+  PublicSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      CidrBlock: "10.192.10.0/24"
+      VpcId:
+        Ref: "VPC"
+      Tags:
+        - Key: Name
+          Value: "PublicSubnet1"
+  PublicSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      CidrBlock: "10.192.11.0/24"
+      VpcId:
+        Ref: "VPC"
+      Tags:
+        - Key: Name
+          Value: "PublicSubnet2"
+  PrivateSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      CidrBlock: "10.192.20.0/24"
+      MapPublicIpOnLaunch: false
+      VpcId:
+        Ref: "VPC"
+      Tags:
+        - Key: Name
+          Value: "PrivateSubnet1"
+  PrivateSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      CidrBlock: "10.192.21.0/24"
+      MapPublicIpOnLaunch: false
+      VpcId:
+        Ref: "VPC"
+      Tags:
+        - Key: Name
+          Value: "PrivateSubnet2"
+  InternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - { Key: "Application", Value: "non-default" }
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: AttachGateway
+    Properties:
+      Domain: vpc
+  NatGateway2EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: AttachGateway
+    Properties:
+      Domain: vpc
+  NATGateway1:
+    Type: "AWS::EC2::NatGateway"
+    Properties:
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId:
+        Ref: "PublicSubnet1"
+      Tags:
+        - Key: "Application"
+          Value: "non-default"
+  NATGateway2:
+    Type: "AWS::EC2::NatGateway"
+    Properties:
+      AllocationId: !GetAtt NatGateway2EIP.AllocationId
+      SubnetId:
+        Ref: "PublicSubnet2"
+      Tags:
+        - Key: "Application"
+          Value: "non-default"
+  S3GatewayEndpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action:
+              - 's3:*'
+            Resource:
+              - '*'
+      RouteTableIds:
+        - !Ref PublicRouteTable
+        - !Ref PrivateRouteTable1
+        - !Ref PrivateRouteTable2
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcId:
+        Ref: "VPC"
+  AttachGateway:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      InternetGatewayId:
+        Ref: "InternetGateway"
+      VpcId:
+        Ref: "VPC"
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway1
+  PrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway2
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+Outputs:
+  VPC:
+    Description: A reference to the created non-default VPC
+    Value: !Ref VPC
+
+  PublicSubnets:
+    Description: A list of the public (non-default) subnets
+    Value: !Join [ ",", [ !Ref PublicSubnet1, !Ref PublicSubnet2]]
+
+  PrivateSubnets:
+    Description: A list of the private (non-default) subnets
+    Value: !Join [ ",", [ !Ref PrivateSubnet1, !Ref PrivateSubnet2 ] ]
+
+  PublicSubnet1:
+    Description: A reference to the non-default public subnet in the 1st Availability Zone
+    Value: !Ref PublicSubnet1
+
+  PublicSubnet2:
+    Description: A reference to the non-default public subnet in the 2nd Availability Zone
+    Value: !Ref PublicSubnet2
+
+  PrivateSubnet1:
+    Description: A reference to the non-default private subnet in the 1st Availability Zone
+    Value: !Ref PrivateSubnet1
+
+  PrivateSubnet2:
+    Description: A reference to the non-default private subnet in the 2nd Availability Zone
+    Value: !Ref PrivateSubnet2
