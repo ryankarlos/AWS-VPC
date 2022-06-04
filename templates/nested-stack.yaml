@@ -115,7 +115,7 @@ Resources:
       Properties:
           DBInstanceIdentifier:
               Fn::FindInMap: [ "postgres", "InstanceID", "id" ]
-          DBName: !Ref RDSDBName
+          DBName: !Sub "${RDSDBEngine}-${RDSDBName}"
           DBInstanceClass:
               Fn::FindInMap: [ "postgres", "InstanceType", "inst" ]
           AllocatedStorage: !Ref RDSDBAllocatedStorage
@@ -134,7 +134,7 @@ Resources:
       Properties:
           DBInstanceIdentifier:
               Fn::FindInMap: [ "oracle", "InstanceID", "id" ]
-          DBName: !Ref RDSDBName
+          DBName: !Sub "${RDSDBEngine}-${RDSDBName}"
           DBInstanceClass:
               Fn::FindInMap: [ "oracle", "InstanceType", "inst" ]
           AllocatedStorage: !Ref RDSDBAllocatedStorage
@@ -154,7 +154,7 @@ Resources:
       Properties:
           DBInstanceIdentifier:
               Fn::FindInMap: [ "mysql", "InstanceID", "id" ]
-          DBName: !Ref RDSDBName
+          DBName: !Sub "${RDSDBEngine}-${RDSDBName}"
           DBInstanceClass:
               Fn::FindInMap: [ "mysql", "InstanceType", "inst" ]
           AllocatedStorage: !Ref RDSDBAllocatedStorage
@@ -170,6 +170,8 @@ Resources:
   RDSSubnetGroup:
       Type: "AWS::RDS::DBSubnetGroup"
       Properties:
+          DBSubnetGroupDescription: "RDS Subnet Group with two public and one pvt subnet"
+          DBSubnetGroupName: "RDS Subnet Group Name"
           SubnetIds:
               -   Fn::GetAtt:
                       - NestedVPCStack
@@ -179,7 +181,7 @@ Resources:
                       - Outputs.PublicSubnet2
               -   Fn::GetAtt:
                       - NestedVPCStack
-                      - Outputs.DefaultPrivate
+                      - Outputs.PrivateSubnet1
   RedshiftClusterParameterGroup:
       Properties:
           Description: "Cluster parameter group"
@@ -201,6 +203,7 @@ Resources:
   RDSSecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
+          GroupDescription: "RDS Security Group"
           VpcId:
               Fn::GetAtt:
                   - NestedVPCStack
