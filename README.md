@@ -18,11 +18,11 @@ instances in a "public" subnet, we can talk "back" to them from internet, while 
 unreachable from the internet. See AWS references [2,3]
 
 Also, "public" and "private" are just nomenclature or logical names used for subnets. The "thing" that makes a subnet
-public is an AWS solution called as "Internet Gateway" (let's call it IGW for sake of reference for this mail). As our
-docs put it, an IGW enables resources (like EC2 instances) in your public subnets to connect to the internet if the
-resource has a public IPv4 address or an IPv6 address. Similarly, resources on the internet can initiate a connection
-to resources in your subnet using the public IPv4 address or IPv6 address. IGW basically serves two purposes: to
-provide a target in your VPC route tables for internet-routable traffic, and to perform network address translation (NAT)
+public is an AWS solution called as "Internet Gateway" (lets denote this 'IGW' for future reference). As per AWS docs, an 
+IGW enables resources (like EC2 instances) in your public subnets to connect to the internet if the resource has a public 
+IPv4 address or an IPv6 address. Similarly, resources on the internet can initiate a connection to resources in your 
+subnet using the public IPv4 address or IPv6 address. IGW basically serves two purposes: to provide a target in your 
+VPC route tables for internet-routable traffic, and to perform network address translation (NAT)
 for instances that have been assigned public IPv4 addresses. For this to be possible, the route table attached to a
 "public" subnet should have a route configured with default gateway pointing to IGW attached to the said VPC. Also,
 one can connect back to a public instance from internet using the Elastic IP or auto-assigned public IP configured in
@@ -30,12 +30,11 @@ instance configuration. IGW is discussed in [4].
 
 Now, instances in a "private" subnet wont have any routes pointing their default gateway to an IGW (else they wont be
 called private). Thus, they wont be able to talk out to the internet. However, there are scenarios where instances in
-"private" subnets would need internet access (say for performing updates). This is where NAT gateway (let's call it NGW
-for sake of reference for this mail) fits in. A NGW basically allows instances in "private" subnet to connect to
-services outside the VPC, however, external services cannot initiate a connection with those instances. The NGW replaces
-the source IP address of the instances with the IP address of the NAT gateway. Thus, for private instances to be able
-to talk to internet, the NGW associated with them should itself be in a "public" subnet. The internet flow then looks
-like below:
+"private" subnets would need internet access (say for performing updates). This is where NAT gateway (lets denote this 'NGW' 
+for future reference) fits in. A NGW basically allows instances in "private" subnet to connect to services outside the 
+VPC, however, external services cannot initiate a connection with those instances. The NGW replaces the source IP address
+of the instances with the IP address of the NAT gateway. Thus, for private instances to be able to talk to internet, 
+the NGW associated with them should itself be in a "public" subnet. The internet flow then looks like below:
 
 (Private Instance) ----> NGW -----> IGW ---> Internet
 
