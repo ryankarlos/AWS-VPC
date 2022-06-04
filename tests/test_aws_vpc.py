@@ -6,7 +6,6 @@ import pytest
 
 from click.testing import CliRunner
 
-from aws_vpc import aws_vpc
 from aws_vpc import cli
 
 
