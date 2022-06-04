@@ -1,5 +1,5 @@
 
-## VPC in AWS
+# VPC in AWS
 
 
 This repo shows examples of AWS options for configuring VPC and allowing network traffic to internet
