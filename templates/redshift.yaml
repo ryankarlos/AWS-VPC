@@ -1,0 +1,63 @@
+Description: "This template creates a child stack with redshift resource in a custom vpc"
+Parameters:
+  Username:
+    Description: "Redshift Master username"
+    Type: "String"
+  Password:
+    Description: "Redshift Master password"
+    Type: "String"
+  Subnet1:
+      Default: subnet-0559a76c20973f935
+      Description: "Default VPC Public Subnet 1 ind for redshift subnet group"
+      Type: "String"
+  Subnet2:
+      Default: subnet-0bca7c8227c55bf1f
+      Description: "Default VPC Public subnet 2 for redshift subnet group"
+      Type: "String"
+  Subnet3:
+      Default: subnet-0ec7aae8fc47315b5
+      Description: "Default VPC Public subnet 3 for redshift subnet group"
+      Type: "String"
+  NodeType:
+    Description: "Type of node in redshift cluster. Only allow nodes whose pricing < $1/hr in US-east region"
+    Default: dc2.large
+    AllowedValues:
+      - ds2.xlarge
+      - dc1.large
+      - dc2.large
+    Type: "String"
+  DBName:
+    Description: "Name of redshift db"
+    Default: dev
+    Type: "String"
+Resources:
+  RedshiftCluster:
+    Type: "AWS::Redshift::Cluster"
+    Properties:
+      DBName:
+        Ref: "DBName"
+      MasterUsername:
+        Ref: "Username"
+      MasterUserPassword:
+        Ref: "Password"
+      NodeType:
+        Ref: "NodeType"
+      ClusterType: "single-node"
+      ClusterIdentifier: "default-cluster"
+      Port: "8192"
+      ClusterParameterGroupName:
+        Ref: "RedshiftClusterParameterGroup"
+      ClusterSubnetGroupName:
+        Ref: "RedshiftSubnetGroup"
+  RedshiftClusterParameterGroup:
+      Properties:
+          Description: "Cluster parameter group"
+          ParameterGroupFamily: "redshift-1.0"
+          Parameters:
+              - { ParameterName: "enable_user_activity_logging", ParameterValue: "true" }
+      Type: "AWS::Redshift::ClusterParameterGroup"
+  RedshiftSubnetGroup:
+      Type: "AWS::Redshift::ClusterSubnetGroup"
+      Properties:
+          Description: "Default VPC Public Subnet Group available for the default Redshift Cluster"
+          SubnetIds: [!Ref Subnet1, !Ref Subnet2, !Ref Subnet3]

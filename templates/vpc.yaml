@@ -1,17 +1,43 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Security groups and subnets"
+Description: "This template creates a custom VPC with public and private subnets in different availability zones."
+Parameters:
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.0.0.0/16
+
+  PublicSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.0.0/24
+
+  PublicSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.1.0/24
+
+  PrivateSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.2.0/24
+
+  PrivateSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.3.0/24
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
     Properties:
-      CidrBlock: "10.192.0.0/16"
+      CidrBlock: !Ref VpcCIDR
       Tags:
         - Key: Name
-          Value: vpc-ec2-rds-redshift
+          Value: vpc-2-pub-priv
   PublicSubnet1:
     Type: "AWS::EC2::Subnet"
     Properties:
-      CidrBlock: "10.192.10.0/24"
+      CidrBlock: !Ref PublicSubnet1CIDR
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
       VpcId:
         Ref: "VPC"
       Tags:
@@ -20,7 +46,8 @@ Resources:
   PublicSubnet2:
     Type: "AWS::EC2::Subnet"
     Properties:
-      CidrBlock: "10.192.11.0/24"
+      CidrBlock: !Ref PublicSubnet2CIDR
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
       VpcId:
         Ref: "VPC"
       Tags:
@@ -29,7 +56,8 @@ Resources:
   PrivateSubnet1:
     Type: "AWS::EC2::Subnet"
     Properties:
-      CidrBlock: "10.192.20.0/24"
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      AvailabilityZone: !Select [ 2, !GetAZs '' ]
       MapPublicIpOnLaunch: false
       VpcId:
         Ref: "VPC"
@@ -39,7 +67,8 @@ Resources:
   PrivateSubnet2:
     Type: "AWS::EC2::Subnet"
     Properties:
-      CidrBlock: "10.192.21.0/24"
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      AvailabilityZone: !Select [ 3, !GetAZs '' ]
       MapPublicIpOnLaunch: false
       VpcId:
         Ref: "VPC"

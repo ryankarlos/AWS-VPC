@@ -1,33 +1,5 @@
-Description: "This template creates a nested stack with redshift resource in a vpc and ec2 and rds resources in another vpc"
-Mappings:
-    oracle:
-      EngineVersion:
-        ver: "12.1.0.2.v4"
-      InstanceType:
-        inst: "db.t4g.medium"
-      InstanceID:
-        id: "oracle-default"
-    postgres:
-      EngineVersion:
-        ver: "14.1"
-      InstanceType:
-        inst: "db.t4g.medium"
-      InstanceID:
-        id: "postgres-default"
-    mysql:
-      EngineVersion:
-        ver: "8.0.23"
-      InstanceType:
-        inst: "db.t4g.medium"
-      InstanceID:
-        id: "mysql-default"
+Description: "This template creates a nested stack with redshift resource in a vpc and rds resource in another vpc"
 Parameters:
-  RedshiftUsername:
-    Description: "Redshift Master username"
-    Type: "String"
-  RedshiftPassword:
-    Description: "Redshift Master password"
-    Type: "String"
   RDSDBUsername:
     Description: Username for RDS database access
     Type: String
@@ -40,186 +12,53 @@ Parameters:
     Type: String
     AllowedPattern: '[a-zA-Z0-9]*'
     ConstraintDescription: must contain only alphanumeric characters.
-  ClientIP:
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
-    ConstraintDescription: "It must be a valid IP CIDR range of the form x.x.x.x/x. Suggest to enable access to your IP address only. Pls get your address using checkip.amazonaws.com or whatsmyip.org."
-    Description: "The IP address range that can be used to connect to the RDS instances from your local machine.It must be a valid IP CIDR range of the form x.x.x.x/x.Pls get your address using checkip.amazonaws.com or whatsmyip.org"
-    Type: "String"
-  NodeType:
-    Description: "Type of node in redshift cluster. Only allow nodes whose pricing < $1/hr in US-east region"
-    Default: dc2.large
-    AllowedValues:
-      - ds2.xlarge
-      - dc1.large
-      - dc2.large
-    Type: "String"
-  RedshiftDBName:
-    Description: "Name of redshift db"
-    Default: dev
-    Type: "String"
-  RDSDBName:
-    Default: dev
-    Description: "RDS DB name"
+  RedshiftUsername:
+    Description: Redshift Username database access
     Type: String
-    MinLength: '1'
-    MaxLength: '64'
-    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
-    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
-  RDSDBEngine:
-    Default: postgres
-    Description: RDS db engine e.g. postgres, mysql, mariadb, sqlserver
+  RedshiftPassword:
+    Description: Redshift Password database access
     Type: String
-    AllowedValues:
-      - mysql
-      - postgres
-      - oracle-se
-  RDSDBAllocatedStorage:
-    Default: '20'
-    Description: The size of the RDS database (GiB)
-    Type: Number
-    MinValue: '20'
-    MaxValue: '50'
-    ConstraintDescription: must be between 20 and 50 GiB.
-Conditions:
-  CreatePostgres: !Equals
-    - !Ref RDSDBEngine
-    - postgres
-  CreateOracle: !Equals
-    - !Ref RDSDBEngine
-    - oracle-se
-  CreateMySQL: !Equals
-    - !Ref RDSDBEngine
-    - mysql
+  UserIP:
+      AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+      ConstraintDescription: "It must be a valid IP CIDR range of the form x.x.x.x/x. Suggest to enable access to your IP address only. Pls get your address using checkip.amazonaws.com or whatsmyip.org."
+      Description: "The IP address range that can be used to connect to the RDS instances from your local machine.It must be a valid IP CIDR range of the form x.x.x.x/x.Pls get your address using checkip.amazonaws.com or whatsmyip.org"
+      Type: "String"
 Resources:
-  RedshiftCluster:
-    Type: "AWS::Redshift::Cluster"
+  NestedRDSStack:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Retain
     Properties:
-      DBName:
-        Ref: "RedshiftDBName"
-      MasterUsername:
-        Ref: "RedshiftUsername"
-      MasterUserPassword:
-        Ref: "RedshiftPassword"
-      NodeType:
-        Ref: "NodeType"
-      ClusterType: "single-node"
-      ClusterIdentifier: "default-cluster"
-      Port: "8192"
-      ClusterParameterGroupName:
-        Ref: "RedshiftClusterParameterGroup"
-      ClusterSubnetGroupName:
-        Ref: "RedshiftSubnetGroup"
-  DefaultInstance:
-      Type: 'AWS::RDS::DBInstance'
-      Condition: CreatePostgres
-      Properties:
-          DBInstanceIdentifier:
-              Fn::FindInMap: [ "postgres", "InstanceID", "id" ]
-          DBName: !Sub "${RDSDBEngine}-${RDSDBName}"
-          DBInstanceClass:
-              Fn::FindInMap: [ "postgres", "InstanceType", "inst" ]
-          AllocatedStorage: !Ref RDSDBAllocatedStorage
-          Engine: !Ref RDSDBEngine
-          EngineVersion:
-              Fn::FindInMap: [ "postgres", "EngineVersion", "ver" ]
-          MasterUsername: !Ref RDSDBUsername
-          MasterUserPassword: !Ref RDSDBPassword
-          StorageType: "gp2"
-          PubliclyAccessible: "true"
-          VPCSecurityGroups: !Ref "RDSSecurityGroup"
-          DBSubnetGroupName: !Ref "RDSSubnetGroup"
-  RDSOracleInstance:
-      Type: 'AWS::RDS::DBInstance'
-      Condition: CreateOracle
-      Properties:
-          DBInstanceIdentifier:
-              Fn::FindInMap: [ "oracle", "InstanceID", "id" ]
-          DBName: !Sub "${RDSDBEngine}-${RDSDBName}"
-          DBInstanceClass:
-              Fn::FindInMap: [ "oracle", "InstanceType", "inst" ]
-          AllocatedStorage: !Ref RDSDBAllocatedStorage
-          Engine: !Ref RDSDBEngine
-          EngineVersion:
-              Fn::FindInMap: [ "oracle", "EngineVersion", "ver" ]
-          MasterUsername: !Ref RDSDBUsername
-          MasterUserPassword: !Ref RDSDBPassword
-          StorageType: "gp2"
-          PubliclyAccessible: "true"
-          VPCSecurityGroups: !Ref "RDSSecurityGroup"
-          DBSubnetGroupName: !Ref "RDSSubnetGroup"
-          LicenseModel: "bring-your-own-license"
-  RDSMySQLInstance:
-      Type: 'AWS::RDS::DBInstance'
-      Condition: CreateMySQL
-      Properties:
-          DBInstanceIdentifier:
-              Fn::FindInMap: [ "mysql", "InstanceID", "id" ]
-          DBName: !Sub "${RDSDBEngine}-${RDSDBName}"
-          DBInstanceClass:
-              Fn::FindInMap: [ "mysql", "InstanceType", "inst" ]
-          AllocatedStorage: !Ref RDSDBAllocatedStorage
-          Engine: !Ref RDSDBEngine
-          EngineVersion:
-              Fn::FindInMap: [ "mysql", "EngineVersion", "ver" ]
-          MasterUsername: !Ref RDSDBUsername
-          MasterUserPassword: !Ref RDSDBPassword
-          StorageType: "gp2"
-          PubliclyAccessible: "true"
-          DBSecurityGroups: !Ref "RDSSecurityGroup"
-          DBSubnetGroupName: !Ref "RDSSubnetGroup"
-  RDSSubnetGroup:
-      Type: "AWS::RDS::DBSubnetGroup"
-      Properties:
-          DBSubnetGroupDescription: "RDS Subnet Group with two public and one pvt subnet"
-          DBSubnetGroupName: "RDS Subnet Group Name"
-          SubnetIds:
-              -   Fn::GetAtt:
-                      - NestedVPCStack
-                      - Outputs.PublicSubnet1
-              -   Fn::GetAtt:
-                      - NestedVPCStack
-                      - Outputs.PublicSubnet2
-              -   Fn::GetAtt:
-                      - NestedVPCStack
-                      - Outputs.PrivateSubnet1
-  RedshiftClusterParameterGroup:
-      Properties:
-          Description: "Cluster parameter group"
-          ParameterGroupFamily: "redshift-1.0"
-          Parameters:
-              - { ParameterName: "enable_user_activity_logging", ParameterValue: "true" }
-      Type: "AWS::Redshift::ClusterParameterGroup"
-  RedshiftSubnetGroup:
-      Type: "AWS::Redshift::ClusterSubnetGroup"
-      Properties:
-          Description: "Subnet Group available for the default Redshift Cluster"
-          SubnetIds:
-              - Fn::GetAtt:
+      TemplateURL: >-
+        https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/rds.yaml
+      Parameters:
+          DBUsername: !Ref RDSDBUsername
+          DBPassword: !Ref RDSDBPassword
+          PublicSubnet1:
+                Fn::GetAtt:
                     - NestedVPCStack
                     - Outputs.PublicSubnet1
-              - Fn::GetAtt:
+          PublicSubnet2:
+                Fn::GetAtt:
                     - NestedVPCStack
                     - Outputs.PublicSubnet2
-  RDSSecurityGroup:
-      Type: AWS::EC2::SecurityGroup
-      Properties:
-          GroupDescription: "RDS Security Group"
-          VpcId:
-              Fn::GetAtt:
-                  - NestedVPCStack
-                  - Outputs.VPC
-          SecurityGroupIngress:
-              -   IpProtocol: tcp
-                  FromPort: 22
-                  ToPort: 22
-                  CidrIp: !Ref ClientIP
-              -   IpProtocol: icmp
-                  FromPort: 8
-                  ToPort: -1
-                  CidrIp: !Ref ClientIP
-          SecurityGroupEgress:
-              -   CidrIp: !Ref ClientIP
-                  IpProtocol: "-1"
+          PrivateSubnet:
+                Fn::GetAtt:
+                    - NestedVPCStack
+                    - Outputs.PrivateSubnet1
+          VPC:
+                Fn::GetAtt:
+                    - NestedVPCStack
+                    - Outputs.VPC
+          ClientIP: !Ref UserIP
+  NestedRedshiftStack:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: >-
+        https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/redshift.yaml
+      Parameters:
+          Username: !Ref RedshiftUsername
+          Password: !Ref RedshiftPassword
   NestedVPCStack:
     Type: 'AWS::CloudFormation::Stack'
     DeletionPolicy: Retain
