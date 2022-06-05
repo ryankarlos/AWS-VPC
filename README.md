@@ -8,6 +8,67 @@ and other services. Using two examples:
 1) Deploying flask application in ec2 instance and communicating with RDS in same VPC
 2) Communicating betweein Redshift and RDS DB in separate VPC 
 
+#### Setup venv 
+
+First `cd` to the root of the repo and then run the following command to setup a virtual env named `virt` and activate it 
+
+```
+$ virtualenv virt
+$ source virt/bin/activate
+```
+
+Install the dependencies from the `requirements.txt` file. If you want to install the development dependencies then
+install from `requirements_dev.txt`
+
+```
+$ pip install -r requirements.txt
+```
+
+To view installed dependencies in the environmentrun `pip freeze`
+
+
+#### Create AWS resource using CloudFormation
+
+The AWS Cloudformation templates are stored in `templates` folder. These are arranged in a heirarchy (nested stacks) where the root stack `nested-stack.yaml`
+is the  top level stack referencing the other nested stacks (`redshift.yaml`,`rds.yaml`, `VPC.yaml`). More info about nested stacks in the AWS docs https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html
+
+Root stack `nested-stack.yaml` uses the AWS::CloudFormation::Stack resource to reference the child stack template containing the required resouce configuration,
+with a `DeletionPolicy::Retain`. The nested AWS::CloudFormation::Stack definition in the parent stack template matches the actual nested stack's template
+which needs to be uploaded to S3 and https url referenced in the `TemplateURL` property.
+
+To validate cloud formation template(s) run the following command as below (replacing the template path with the path to your template) which should return a ValidationError if the template is malformed or contains incorrect keys, syntax errors or references to logical ids etc
+
+```
+$ aws cloudformation validate-template --template-body file://templates/redshift.yaml
+
+An error occurred (ValidationError) when calling the ValidateTemplate operation: Template format error: Unrecognized parameter type: Bool
+```
+
+To create all the nested stacks and root stack, use create-stack action for cloudformation via cli https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html
+Replace <username> and <password> with the required usernames and passwords you wish to set for redhsift cluster and rds db instance
+respectively. <ip> should be the client ip you wish to grant access to the db (must be of the format 191.255.255.255/24). Note the trailing
+slash .Can be checked by launching EC2 instance from console - Network Settings -> tick the 'Allow SSH traffic from' box and select 'My IP'
+from the dropdown which should show your IP address in the required format.
+    
+```
+$ aws cloudformation create-stack \
+> --stack-name Nested-RDS-Redshift-VPC \
+> --template-body file://templates/nested-stack.yaml \
+> --parameters ParameterKey=RDSDBUsername,ParameterValue=<username> \
+> ParameterKey=RDSDBPassword,ParameterValue=<password> \
+> ParameterKey=RedshiftUsername,ParameterValue=<username> \
+> ParameterKey=RedshiftPassword,ParameterValue=<password> \
+> ParameterKey=UserIP,ParameterValue=<ip>
+  ```
+    
+ Alternatively, from the console:
+    * create stack with new resources
+    * upload sample tempate (root stack template i.e. `nested_stack.yaml`)
+    * add stack details -> input stack name and parameters if required
+    * Leave default settings in configure stack options and review steps
+    * Before creating stack, tick the `I acknowledge` checkboxes in capabilites section
+   
+
 ### AWS VPC Basics
 
 A VPC is basically a virtual network segment that is provided to AWS customers in our cloud, similar to a traditional
@@ -68,15 +129,7 @@ SG's are discussed in reference [5]
 5) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
 
 
-### Installing virtual env requirements
-
-
-
-
-### Cloudformation
-
-
-
+```
 
 ### Credits
 
