@@ -102,7 +102,7 @@ Resources:
           MasterUserPassword: !Ref DBPassword
           StorageType: "gp2"
           PubliclyAccessible: "true"
-          VPCSecurityGroups: !Ref "RDSSecurityGroup"
+          VPCSecurityGroups: [!Ref "RDSSecurityGroup"]
           DBSubnetGroupName: !Ref "RDSSubnetGroup"
   RDSOracleInstance:
       Type: 'AWS::RDS::DBInstance'
@@ -121,7 +121,7 @@ Resources:
           MasterUserPassword: !Ref DBPassword
           StorageType: "gp2"
           PubliclyAccessible: "true"
-          VPCSecurityGroups: !Ref "RDSSecurityGroup"
+          VPCSecurityGroups: [!Ref "RDSSecurityGroup"]
           DBSubnetGroupName: !Ref "RDSSubnetGroup"
           LicenseModel: "bring-your-own-license"
   RDSMySQLInstance:
@@ -141,7 +141,7 @@ Resources:
           MasterUserPassword: !Ref DBPassword
           StorageType: "gp2"
           PubliclyAccessible: "true"
-          DBSecurityGroups: !Ref "RDSSecurityGroup"
+          VPCSecurityGroups: [!Ref "RDSSecurityGroup"]
           DBSubnetGroupName: !Ref "RDSSubnetGroup"
   RDSSubnetGroup:
       Type: "AWS::RDS::DBSubnetGroup"

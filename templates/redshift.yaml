@@ -1,4 +1,4 @@
-Description: "This template creates a child stack with redshift resource in a custom vpc"
+Description: "This template creates a child stack with redshift resource with enhanced VPC routing in a custom vpc"
 Parameters:
   Username:
     Description: "Redshift Master username"
@@ -7,17 +7,24 @@ Parameters:
     Description: "Redshift Master password"
     Type: "String"
   Subnet1:
-      Default: subnet-0559a76c20973f935
-      Description: "Default VPC Public Subnet 1 ind for redshift subnet group"
-      Type: "String"
+    Default: subnet-0559a76c20973f935
+    Description: "Default VPC Public Subnet 1 ind for redshift subnet group"
+    Type: "String"
   Subnet2:
-      Default: subnet-0bca7c8227c55bf1f
-      Description: "Default VPC Public subnet 2 for redshift subnet group"
-      Type: "String"
+    Default: subnet-0bca7c8227c55bf1f
+    Description: "Default VPC Public subnet 2 for redshift subnet group"
+    Type: "String"
   Subnet3:
-      Default: subnet-0ec7aae8fc47315b5
-      Description: "Default VPC Public subnet 3 for redshift subnet group"
-      Type: "String"
+    Default: subnet-0ec7aae8fc47315b5
+    Description: "Default VPC Public subnet 3 for redshift subnet group"
+    Type: "String"
+  EnhancedRouting:
+    Default: true
+    Description: "n option that specifies whether to create the cluster with enhanced VPC routing enabled."
+    Type: "String"
+    AllowedValues:
+        - true
+        - false
   NodeType:
     Description: "Type of node in redshift cluster. Only allow nodes whose pricing < $1/hr in US-east region"
     Default: dc2.large
@@ -49,6 +56,8 @@ Resources:
         Ref: "RedshiftClusterParameterGroup"
       ClusterSubnetGroupName:
         Ref: "RedshiftSubnetGroup"
+      EnhancedVpcRouting:
+          Ref: "EnhancedRouting"
   RedshiftClusterParameterGroup:
       Properties:
           Description: "Cluster parameter group"
