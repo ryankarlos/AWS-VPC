@@ -129,8 +129,6 @@ SG's are discussed in reference [5]
 5) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
 
 
-```
-
 ### Credits
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
