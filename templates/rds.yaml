@@ -91,7 +91,7 @@ Resources:
       Properties:
           DBInstanceIdentifier:
               Fn::FindInMap: [ "postgres", "InstanceID", "id" ]
-          DBName: !Sub "${DBEngine}-${DBName}"
+          DBName: !Sub "${DBEngine}${DBName}"
           DBInstanceClass:
               Fn::FindInMap: [ "postgres", "InstanceType", "inst" ]
           AllocatedStorage: !Ref DBAllocatedStorage
@@ -110,7 +110,7 @@ Resources:
       Properties:
           DBInstanceIdentifier:
               Fn::FindInMap: [ "oracle", "InstanceID", "id" ]
-          DBName: !Sub "${DBEngine}-${DBName}"
+          DBName: !Sub "${DBEngine}${DBName}"
           DBInstanceClass:
               Fn::FindInMap: [ "oracle", "InstanceType", "inst" ]
           AllocatedStorage: !Ref DBAllocatedStorage
@@ -130,7 +130,7 @@ Resources:
       Properties:
           DBInstanceIdentifier:
               Fn::FindInMap: [ "mysql", "InstanceID", "id" ]
-          DBName: !Sub "${DBEngine}-${DBName}"
+          DBName: !Sub "${DBEngine}${DBName}"
           DBInstanceClass:
               Fn::FindInMap: [ "mysql", "InstanceType", "inst" ]
           AllocatedStorage: !Ref DBAllocatedStorage
