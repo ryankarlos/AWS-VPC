@@ -25,12 +25,6 @@ Parameters:
     MinValue: '20'
     MaxValue: '50'
     ConstraintDescription: must be between 20 and 50 GiB.
-  RedshiftDefaultSecurity:
-    Default: 'sg-0c590da7a0c761d85'
-    Description: The id of redshift security group id attached to default VPC
-    Type: String
-    AllowedPattern: 'sg-[a-zA-Z0-9]*'
-    ConstraintDescription: must begin with sg- and contain alphanumeric characters
   EC2DefaultSecurity:
     Default: 'sg-0afdf2d5ce4c8ed3e'
     Description: The id of EC2 security group id attached to default VPC
@@ -103,8 +97,6 @@ Resources:
                     - NestedVPCStack
                     - Outputs.VPC
           ClientIP: !Ref UserIP
-          EC2SecurityGroup1: !Ref EC2DefaultSecurity
-          EC2SecurityGroup2: !Ref  EC2SecurityGroup
   NestedRedshiftStack:
     Type: 'AWS::CloudFormation::Stack'
     DeletionPolicy: Retain
@@ -114,15 +106,9 @@ Resources:
       Parameters:
           Username: !Ref RedshiftUsername
           Password: !Ref RedshiftPassword
-          ClientIP: !Ref UserIP
-          EC2SecurityGroup1: !Ref EC2DefaultSecurity
-          EC2SecurityGroup2: !Ref  EC2SecurityGroup
   NestedVPCStack:
     Type: 'AWS::CloudFormation::Stack'
     DeletionPolicy: Retain
     Properties:
       TemplateURL: >-
         https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/vpc.yaml
-      Parameters:
-          RedshiftDefaultSecurityGroup: !Ref RedshiftDefaultSecurity
-          EC2DefaultSecurityGroup: !Ref EC2DefaultSecurity

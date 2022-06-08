@@ -6,21 +6,21 @@ Mappings:
       InstanceType:
         inst: "db.t4g.medium"
       InstanceID:
-        id: "oracle-default"
+        id: "oracle-non-default"
     postgres:
       EngineVersion:
         ver: "14.1"
       InstanceType:
         inst: "db.t4g.medium"
       InstanceID:
-        id: "postgres-default"
+        id: "postgres-non-default"
     mysql:
       EngineVersion:
         ver: "8.0.23"
       InstanceType:
         inst: "db.t4g.medium"
       InstanceID:
-        id: "mysql-default"
+        id: "mysql-non-default"
 Parameters:
   DBUsername:
     Description: Username for RDS database access
@@ -74,17 +74,6 @@ Parameters:
     ConstraintDescription: "It must be a valid IP CIDR range of the form x.x.x.x/x. Suggest to enable access to your IP address only. Pls get your address using checkip.amazonaws.com or whatsmyip.org."
     Description: "The IP address range that can be used to connect to the RDS instances from your local machine.It must be a valid IP CIDR range of the form x.x.x.x/x.Pls get your address using checkip.amazonaws.com or whatsmyip.org"
     Type: "String"
-  EC2SecurityGroup1:
-    Default: "sg-0afdf2d5ce4c8ed3e"
-    Description: The id of EC2 security group id attached to default VPC
-    Type: String
-    AllowedPattern: 'sg-[a-zA-Z0-9]*'
-    ConstraintDescription: must begin with sg- and contain alphanumeric characters
-  EC2SecurityGroup2:
-      Description: The id of EC2 security group id attached to non-default VPC
-      Type: String
-      AllowedPattern: 'sg-[a-zA-Z0-9]*'
-      ConstraintDescription: must begin with sg- and contain alphanumeric characters
 Conditions:
   CreatePostgres: !Equals
     - !Ref DBEngine
@@ -174,16 +163,6 @@ Resources:
                   FromPort: 1433
                   ToPort: 1433
                   CidrIp: !Ref ClientIP
-              -   IpProtocol: tcp
-                  FromPort: 0
-                  ToPort: 65535
-                  SourceSecurityGroupId:
-                      Ref: "EC2SecurityGroup1"
-              -   IpProtocol: tcp
-                  FromPort: 0
-                  ToPort: 65535
-                  SourceSecurityGroupId:
-                      Ref: "EC2SecurityGroup2"
               -   IpProtocol: icmp
                   FromPort: 8
                   ToPort: -1

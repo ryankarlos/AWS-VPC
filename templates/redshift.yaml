@@ -37,26 +37,12 @@ Parameters:
     Description: "Name of redshift db"
     Default: dev
     Type: "String"
-  EC2SecurityGroup1:
-      Default: "sg-0afdf2d5ce4c8ed3e"
-      Description: The id of EC2 security group id attached to default VPC
+  RSDefaultSecurity:
+      Default: "sg-0c590da7a0c761d85"
+      Description: The id of Redshift security group id attached to default VPC
       Type: String
       AllowedPattern: 'sg-[a-zA-Z0-9]*'
       ConstraintDescription: must begin with sg- and contain alphanumeric characters
-  EC2SecurityGroup2:
-      Description: The id of EC2 security group id attached to non-default VPC
-      Type: String
-      AllowedPattern: 'sg-[a-zA-Z0-9]*'
-      ConstraintDescription: must begin with sg- and contain alphanumeric characters
-  VPC:
-      Default: "vpc-09eeb45f883f8307c"
-      Description: "Default VPC ID"
-      Type: "String"
-  ClientIP:
-      AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
-      ConstraintDescription: "It must be a valid IP CIDR range of the form x.x.x.x/x. Suggest to enable access to your IP address only. Pls get your address using checkip.amazonaws.com or whatsmyip.org."
-      Description: "The IP address range that can be used to connect to the RDS instances from your local machine.It must be a valid IP CIDR range of the form x.x.x.x/x.Pls get your address using checkip.amazonaws.com or whatsmyip.org"
-      Type: "String"
 Resources:
   RedshiftCluster:
     Type: "AWS::Redshift::Cluster"
@@ -72,13 +58,13 @@ Resources:
       ClusterType: "single-node"
       ClusterIdentifier: "default-cluster"
       Port: "8192"
-      ClusterSecurityGroups: [!Ref "RedshiftSecurityGroup"]
       ClusterParameterGroupName:
         Ref: "RedshiftClusterParameterGroup"
       ClusterSubnetGroupName:
         Ref: "RedshiftSubnetGroup"
       EnhancedVpcRouting:
           Ref: "EnhancedRouting"
+      VpcSecurityGroupIds: [!Ref RSDefaultSecurity]
   RedshiftClusterParameterGroup:
       Properties:
           Description: "Cluster parameter group"
@@ -91,29 +77,3 @@ Resources:
       Properties:
           Description: "Default VPC Public Subnet Group available for the default Redshift Cluster"
           SubnetIds: [!Ref Subnet1, !Ref Subnet2, !Ref Subnet3]
-  RedshiftSecurityGroup:
-      Type: AWS::EC2::SecurityGroup
-      Properties:
-          GroupDescription: "Redshift for non-default VPC"
-          VpcId: !Ref VPC
-          SecurityGroupIngress:
-              -   IpProtocol: tcp
-                  FromPort: 5439
-                  ToPort: 5432
-                  CidrIp: !Ref ClientIP
-              -   IpProtocol: tcp
-                  FromPort: 0
-                  ToPort: 65535
-                  SourceSecurityGroupId:
-                      Ref: "EC2SecurityGroup1"
-              -   IpProtocol: tcp
-                  FromPort: 0
-                  ToPort: 65535
-                  SourceSecurityGroupId:
-                      Ref: "EC2SecurityGroup2"
-          SecurityGroupEgress:
-              -   CidrIp: "0.0.0.0/0"
-                  IpProtocol: "-1"
-          Tags:
-              -   Key: Name
-                  Value: Redshift
