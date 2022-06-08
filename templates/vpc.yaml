@@ -1,28 +1,50 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Security groups and subnets"
+Description: "This template creates a custom VPC with public and private subnets in different availability zones."
 Parameters:
-    RedshiftDefaultSecurityGroup:
-        Description: The id of redshift security group id attached to default VPC
-        Type: String
-        AllowedPattern: 'sg-[a-zA-Z0-9]*'
-        ConstraintDescription: must begin with sg- and contain alphanumeric characters
-    EC2DefaultSecurityGroup:
-        Description: The id of EC2 security group id attached to default VPC
-        Type: String
-        AllowedPattern: 'sg-[a-zA-Z0-9]*'
-        ConstraintDescription: must begin with sg- and contain alphanumeric characters
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.0.0.0/16
+  PublicSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.0.0/24
+  PublicSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.1.0/24
+  PrivateSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.2.0/24
+  PrivateSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.3.0/24
+  RedshiftDefaultSecurityGroup:
+    Description: The id of redshift security group id attached to default VPC
+    Type: String
+    AllowedPattern: 'sg-[a-zA-Z0-9]*'
+    ConstraintDescription: must begin with sg- and contain alphanumeric characters
+  EC2DefaultSecurityGroup:
+    Description: The id of EC2 security group id attached to default VPC
+    Type: String
+    AllowedPattern: 'sg-[a-zA-Z0-9]*'
+    ConstraintDescription: must begin with sg- and contain alphanumeric characters
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
     Properties:
-      CidrBlock: "10.192.0.0/16"
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      CidrBlock: !Ref VpcCIDR
       Tags:
         - Key: Name
-          Value: vpc-ec2-rds-redshift
+          Value: vpc-2-pub-priv
   PublicSubnet1:
     Type: "AWS::EC2::Subnet"
     Properties:
-      CidrBlock: "10.192.10.0/24"
+      CidrBlock: !Ref PublicSubnet1CIDR
       AvailabilityZone: !Select [ 0, !GetAZs '' ]
       VpcId:
         Ref: "VPC"
@@ -32,8 +54,8 @@ Resources:
   PublicSubnet2:
     Type: "AWS::EC2::Subnet"
     Properties:
-      CidrBlock: "10.192.11.0/24"
-      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: !Ref PublicSubnet2CIDR
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
       VpcId:
         Ref: "VPC"
       Tags:
@@ -42,8 +64,8 @@ Resources:
   PrivateSubnet1:
     Type: "AWS::EC2::Subnet"
     Properties:
-      CidrBlock: "10.192.20.0/24"
-      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      AvailabilityZone: !Select [ 2, !GetAZs '' ]
       MapPublicIpOnLaunch: false
       VpcId:
         Ref: "VPC"
@@ -53,8 +75,8 @@ Resources:
   PrivateSubnet2:
     Type: "AWS::EC2::Subnet"
     Properties:
-      CidrBlock: "10.192.21.0/24"
-      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      AvailabilityZone: !Select [ 3, !GetAZs '' ]
       MapPublicIpOnLaunch: false
       VpcId:
         Ref: "VPC"
@@ -171,51 +193,6 @@ Resources:
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet2
-  RDSSecurityGroup:
-      Type: AWS::EC2::SecurityGroup
-      Properties:
-          GroupDescription: "RDS for non-default VPC"
-          VpcId:
-              Fn::GetAtt:
-                  - NestedVPCStack
-                  - Outputs.VPC
-          SecurityGroupIngress:
-              -   IpProtocol: tcp
-                  FromPort: 5432
-                  ToPort: 5432
-                  CidrIp: !Ref ClientIP
-              -   IpProtocol: tcp
-                  FromPort: 1433
-                  ToPort: 1433
-                  CidrIp: !Ref ClientIP
-              -   IpProtocol: tcp
-                  FromPort: 0
-                  ToPort: 65535
-                  SourceSecurityGroupId:
-                      Fn::GetAtt:
-                            -  "EC2SecurityGroup"
-                            -  "GroupId"
-              -   IpProtocol: tcp
-                  FromPort: 0
-                  ToPort: 65535
-                  SourceSecurityGroupId:
-                      Fn::GetAtt:
-                          - "RedshiftDefaultSecurityGroup"
-                          - "GroupId"
-              -   IpProtocol: tcp
-                  FromPort: 0
-                  ToPort: 65535
-                  SourceSecurityGroupId:
-                      Fn::GetAtt:
-                          - "EC2DefaultSecurityGroup"
-                          - "GroupId"
-              -   IpProtocol: icmp
-                  FromPort: 8
-                  ToPort: -1
-                  CidrIp: !Ref ClientIP
-          SecurityGroupEgress:
-              -   CidrIp: "0.0.0.0/0"
-                  IpProtocol: "-1"
   EC2SecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
@@ -247,6 +224,9 @@ Resources:
           SecurityGroupEgress:
               -   CidrIp: "0.0.0.0/0"
                   IpProtocol: "-1"
+          Tags:
+              -   Key: Name
+                  Value: EC2-non-default
 Outputs:
   VPC:
     Description: A reference to the created non-default VPC
@@ -275,10 +255,6 @@ Outputs:
   PrivateSubnet2:
     Description: A reference to the non-default private subnet in the 2nd Availability Zone
     Value: !Ref PrivateSubnet2
-
-  RDSSecurityGroup:
-      Description: A reference to the RDS Security group created for non default vpc
-      Value: !Ref RDSSecurityGroup
 
   EC2SecurityGroup:
       Description: A reference to the security group created for EC2 in non-default vpc

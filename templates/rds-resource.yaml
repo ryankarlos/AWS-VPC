@@ -1,0 +1,200 @@
+Description: "This template is a child stack which creates a rds resource in the custom vpc"
+Mappings:
+    oracle:
+      EngineVersion:
+        ver: "12.1.0.2.v4"
+      InstanceType:
+        inst: "db.t4g.medium"
+      InstanceID:
+        id: "oracle-default"
+    postgres:
+      EngineVersion:
+        ver: "14.1"
+      InstanceType:
+        inst: "db.t4g.medium"
+      InstanceID:
+        id: "postgres-default"
+    mysql:
+      EngineVersion:
+        ver: "8.0.23"
+      InstanceType:
+        inst: "db.t4g.medium"
+      InstanceID:
+        id: "mysql-default"
+Parameters:
+  DBUsername:
+    Description: Username for RDS database access
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  DBPassword:
+    Description: RDS Password database access
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters.
+  DBName:
+    Default: dev
+    Description: "RDS DB name"
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
+  DBEngine:
+    Default: postgres
+    Description: RDS db engine e.g. postgres, mysql, mariadb, sqlserver
+    Type: String
+    AllowedValues:
+      - mysql
+      - postgres
+      - oracle-se
+  DBAllocatedStorage:
+    Default: '20'
+    Description: The size of the RDS database (GiB)
+    Type: Number
+    MinValue: '20'
+    MaxValue: '50'
+    ConstraintDescription: must be between 20 and 50 GiB.
+  PublicSubnet1:
+      Description: "VPC Public Subnet 1 ind for RDS subnet group"
+      Type: "String"
+  PublicSubnet2:
+      Description: "VPC Public subnet 2 for RDS subnet group"
+      Type: "String"
+  PrivateSubnet:
+      Description: "VPC Private subnet for RDS subnet group"
+      Type: "String"
+  VPC:
+      Description: "VPC Id for RDS DB Security Group"
+      Type: "String"
+  ClientIP:
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: "It must be a valid IP CIDR range of the form x.x.x.x/x. Suggest to enable access to your IP address only. Pls get your address using checkip.amazonaws.com or whatsmyip.org."
+    Description: "The IP address range that can be used to connect to the RDS instances from your local machine.It must be a valid IP CIDR range of the form x.x.x.x/x.Pls get your address using checkip.amazonaws.com or whatsmyip.org"
+    Type: "String"
+  EC2SecurityGroup1:
+    Default: "sg-0afdf2d5ce4c8ed3e"
+    Description: The id of EC2 security group id attached to default VPC
+    Type: String
+    AllowedPattern: 'sg-[a-zA-Z0-9]*'
+    ConstraintDescription: must begin with sg- and contain alphanumeric characters
+  EC2SecurityGroup2:
+      Description: The id of EC2 security group id attached to non-default VPC
+      Type: String
+      AllowedPattern: 'sg-[a-zA-Z0-9]*'
+      ConstraintDescription: must begin with sg- and contain alphanumeric characters
+Conditions:
+  CreatePostgres: !Equals
+    - !Ref DBEngine
+    - postgres
+  CreateOracle: !Equals
+    - !Ref DBEngine
+    - oracle-se
+  CreateMySQL: !Equals
+    - !Ref DBEngine
+    - mysql
+Resources:
+  DefaultInstance:
+      Type: 'AWS::RDS::DBInstance'
+      Condition: CreatePostgres
+      Properties:
+          DBInstanceIdentifier:
+              Fn::FindInMap: [ "postgres", "InstanceID", "id" ]
+          DBName: !Sub "${DBEngine}${DBName}"
+          DBInstanceClass:
+              Fn::FindInMap: [ "postgres", "InstanceType", "inst" ]
+          AllocatedStorage: !Ref DBAllocatedStorage
+          Engine: !Ref DBEngine
+          EngineVersion:
+              Fn::FindInMap: [ "postgres", "EngineVersion", "ver" ]
+          MasterUsername: !Ref DBUsername
+          MasterUserPassword: !Ref DBPassword
+          StorageType: "gp2"
+          PubliclyAccessible: "true"
+          VPCSecurityGroups: [!Ref "RDSSecurityGroup"]
+          DBSubnetGroupName: !Ref "RDSSubnetGroup"
+  RDSOracleInstance:
+      Type: 'AWS::RDS::DBInstance'
+      Condition: CreateOracle
+      Properties:
+          DBInstanceIdentifier:
+              Fn::FindInMap: [ "oracle", "InstanceID", "id" ]
+          DBName: !Sub "${DBEngine}${DBName}"
+          DBInstanceClass:
+              Fn::FindInMap: [ "oracle", "InstanceType", "inst" ]
+          AllocatedStorage: !Ref DBAllocatedStorage
+          Engine: !Ref DBEngine
+          EngineVersion:
+              Fn::FindInMap: [ "oracle", "EngineVersion", "ver" ]
+          MasterUsername: !Ref DBUsername
+          MasterUserPassword: !Ref DBPassword
+          StorageType: "gp2"
+          PubliclyAccessible: "true"
+          VPCSecurityGroups: [!Ref "RDSSecurityGroup"]
+          DBSubnetGroupName: !Ref "RDSSubnetGroup"
+          LicenseModel: "bring-your-own-license"
+  RDSMySQLInstance:
+      Type: 'AWS::RDS::DBInstance'
+      Condition: CreateMySQL
+      Properties:
+          DBInstanceIdentifier:
+              Fn::FindInMap: [ "mysql", "InstanceID", "id" ]
+          DBName: !Sub "${DBEngine}${DBName}"
+          DBInstanceClass:
+              Fn::FindInMap: [ "mysql", "InstanceType", "inst" ]
+          AllocatedStorage: !Ref DBAllocatedStorage
+          Engine: !Ref DBEngine
+          EngineVersion:
+              Fn::FindInMap: [ "mysql", "EngineVersion", "ver" ]
+          MasterUsername: !Ref DBUsername
+          MasterUserPassword: !Ref DBPassword
+          StorageType: "gp2"
+          PubliclyAccessible: "true"
+          VPCSecurityGroups: [!Ref "RDSSecurityGroup"]
+          DBSubnetGroupName: !Ref "RDSSubnetGroup"
+  RDSSubnetGroup:
+      Type: "AWS::RDS::DBSubnetGroup"
+      Properties:
+          DBSubnetGroupDescription: "RDS Subnet Group with two public and one pvt subnet"
+          DBSubnetGroupName: "RDS Subnet Group Name"
+          SubnetIds: [!Ref PublicSubnet1, !Ref PublicSubnet2, !Ref PrivateSubnet]
+  RDSSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+          GroupDescription: "RDS for non-default VPC"
+          VpcId: !Ref VPC
+          SecurityGroupIngress:
+              -   IpProtocol: tcp
+                  FromPort: 5432
+                  ToPort: 5432
+                  CidrIp: !Ref ClientIP
+              -   IpProtocol: tcp
+                  FromPort: 1433
+                  ToPort: 1433
+                  CidrIp: !Ref ClientIP
+              -   IpProtocol: tcp
+                  FromPort: 0
+                  ToPort: 65535
+                  SourceSecurityGroupId:
+                      Fn::GetAtt:
+                            -  "EC2SecurityGroup1"
+                            -  "GroupId"
+              -   IpProtocol: tcp
+                  FromPort: 0
+                  ToPort: 65535
+                  SourceSecurityGroupId:
+                      Fn::GetAtt:
+                          - "EC2SecurityGroup2"
+                          - "GroupId"
+              -   IpProtocol: icmp
+                  FromPort: 8
+                  ToPort: -1
+                  CidrIp: !Ref ClientIP
+          SecurityGroupEgress:
+              -   CidrIp: "0.0.0.0/0"
+                  IpProtocol: "-1"
+          Tags:
+              -   Key: Name
+                  Value: RDS-non-default
