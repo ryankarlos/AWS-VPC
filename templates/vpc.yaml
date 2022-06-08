@@ -21,16 +21,6 @@ Parameters:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
     Type: String
     Default: 10.0.3.0/24
-  RedshiftDefaultSecurityGroup:
-    Description: The id of redshift security group id attached to default VPC
-    Type: String
-    AllowedPattern: 'sg-[a-zA-Z0-9]*'
-    ConstraintDescription: must begin with sg- and contain alphanumeric characters
-  EC2DefaultSecurityGroup:
-    Description: The id of EC2 security group id attached to default VPC
-    Type: String
-    AllowedPattern: 'sg-[a-zA-Z0-9]*'
-    ConstraintDescription: must begin with sg- and contain alphanumeric characters
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
@@ -193,40 +183,6 @@ Resources:
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet2
-  EC2SecurityGroup:
-      Type: AWS::EC2::SecurityGroup
-      Properties:
-          GroupDescription: "EC2 for non-default VPC"
-          VpcId:
-              Fn::GetAtt:
-                  - NestedVPCStack
-                  - Outputs.VPC
-          SecurityGroupIngress:
-              -   IpProtocol: tcp
-                  FromPort: 0
-                  ToPort: 65535
-              -   IpProtocol: icmp
-                  FromPort: 8
-                  ToPort: -1
-                  CidrIp: !Ref ClientIP
-              -   IpProtocol: tcp
-                  FromPort: 22
-                  ToPort: 22
-                  CidrIp: !Ref ClientIP
-              -   IpProtocol: tcp
-                  FromPort: 80
-                  ToPort: 80
-                  CidrIp: "0.0.0.0/0"
-              -   IpProtocol: tcp
-                  FromPort: 443
-                  ToPort: 443
-                  CidrIp: "0.0.0.0/0"
-          SecurityGroupEgress:
-              -   CidrIp: "0.0.0.0/0"
-                  IpProtocol: "-1"
-          Tags:
-              -   Key: Name
-                  Value: EC2-non-default
 Outputs:
   VPC:
     Description: A reference to the created non-default VPC
@@ -256,6 +212,3 @@ Outputs:
     Description: A reference to the non-default private subnet in the 2nd Availability Zone
     Value: !Ref PrivateSubnet2
 
-  EC2SecurityGroup:
-      Description: A reference to the security group created for EC2 in non-default vpc
-      Value: !Ref EC2SecurityGroup

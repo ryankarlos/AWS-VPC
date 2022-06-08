@@ -72,6 +72,7 @@ Resources:
       ClusterType: "single-node"
       ClusterIdentifier: "default-cluster"
       Port: "8192"
+      ClusterSecurityGroups: [!Ref "RedshiftSecurityGroup"]
       ClusterParameterGroupName:
         Ref: "RedshiftClusterParameterGroup"
       ClusterSubnetGroupName:
@@ -104,16 +105,12 @@ Resources:
                   FromPort: 0
                   ToPort: 65535
                   SourceSecurityGroupId:
-                      Fn::GetAtt:
-                          - "EC2SecurityGroup1"
-                          - "GroupId"
+                      Ref: "EC2SecurityGroup1"
               -   IpProtocol: tcp
                   FromPort: 0
                   ToPort: 65535
                   SourceSecurityGroupId:
-                      Fn::GetAtt:
-                          - "EC2SecurityGroup2"
-                          - "GroupId"
+                      Ref: "EC2SecurityGroup2"
           SecurityGroupEgress:
               -   CidrIp: "0.0.0.0/0"
                   IpProtocol: "-1"

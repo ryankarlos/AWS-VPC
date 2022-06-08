@@ -178,16 +178,12 @@ Resources:
                   FromPort: 0
                   ToPort: 65535
                   SourceSecurityGroupId:
-                      Fn::GetAtt:
-                            -  "EC2SecurityGroup1"
-                            -  "GroupId"
+                      Ref: "EC2SecurityGroup1"
               -   IpProtocol: tcp
                   FromPort: 0
                   ToPort: 65535
                   SourceSecurityGroupId:
-                      Fn::GetAtt:
-                          - "EC2SecurityGroup2"
-                          - "GroupId"
+                      Ref: "EC2SecurityGroup2"
               -   IpProtocol: icmp
                   FromPort: 8
                   ToPort: -1
