@@ -1,0 +1,10 @@
+[
+  {
+      "ResourceType":"AWS::CloudFormation::Stack",
+      "LogicalResourceId":"NestedVPCStack",
+      "ResourceIdentifier": {
+        "StackId":"arn:aws:cloudformation:us-east-1:376337229415:stack/Root-Stack-RS-EC2-RDS-VPC-NestedVPCStack-Q5R261OC3Y20/dd1f7a60-e45a-11ec-b493-1226559f5489"
+      }
+  }
+]
+
