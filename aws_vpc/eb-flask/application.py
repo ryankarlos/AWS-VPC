@@ -1,11 +1,11 @@
 from flask import Flask
+import psycopg2
+import sys
+import boto3
+import os
+from rds_pg_connect import query_db, get_secret
 
 
-def say_hello(username="World"):
-    return "<p>Hello %s!</p>\n" % username
-
-
-# some bits of text for the page.
 header_text = """
     <html>\n<head> <title>EB Flask Test</title> </head>\n<body>"""
 instructions = """
@@ -15,25 +15,34 @@ instructions = """
 home_link = '<p><a href="/">Back</a></p>\n'
 footer_text = "</body>\n</html>"
 
-# EB looks for an 'application' callable by default.
-application = Flask(__name__)
 
-# add a rule for the index page.
-application.add_url_rule(
-    "/", "index", (lambda: header_text + say_hello() + instructions + footer_text)
-)
+def say_hello(username="AWS user"):
+    count_results, dbname, _ = query_db()
+    return "<p>Hello {}!. There are {} entries in the RDS db '{}' </p>\n".format(
+        username, count_results, dbname
+    )
 
-# add a rule when the page is accessed with a name appended to the site
-# URL.
-application.add_url_rule(
-    "/<username>",
-    "hello",
-    (lambda username: header_text + say_hello(username) + home_link + footer_text),
-)
 
-# run the app.
-if __name__ == "__main__":
-    # Setting debug to True enables debug output. This line should be
-    # removed before deploying a production app.
-    application.debug = True
+def main(debug=False):
+    """
+    Runs the main app. Elastic Beanstalk looks for an 'application'
+    callable by default. Added rules for the index page depending on whether name
+    is appended to site URL or not.
+    Setting debug to True enables debug output. Set to false before deploying a production app.
+    """
+    application = Flask(__name__)
+    application.add_url_rule(
+        "/", "index", (lambda: header_text + say_hello() + instructions + footer_text)
+    )
+
+    application.add_url_rule(
+        "/<username>",
+        "hello",
+        (lambda username: header_text + say_hello(username) + home_link + footer_text),
+    )
+    application.debug = debug
     application.run()
+
+
+if __name__ == "__main__":
+    main()

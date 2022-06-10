@@ -18,25 +18,27 @@ We will need the following requirements:
 2) Allow communication between web server and RDS DB
 3) Allow access to S3 to RDS in VPC
 
-#### Creating VPC, subnets and security groups
+#### Running application locally
 
-Instructions on doing this are detailed in the AWS docs https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Tutorials.WebServerDB.CreateVPC.html#CHAP_Tutorials.WebServerDB.CreateVPC.VPCAndSubnets
-We will do this automatically using cloud formation template in templates/vpc.yaml.
-This creates the following resources:
+Assuming you are in the virutal env `virt` setup in `../README.md` , run `python application.py`
+as below, which should show the address the server is running on. Navigate to this .e.g
+http://127.0.0.1:5000 as in logs below
 
-* VPC with both public and private subnets. Note: You must have either two private subnets or two public subnets available to create a DB subnet group for a DB instance
-to use in a VPC
+```
+(virt) (base) rk1103@Ryans-MacBook-Air eb-flask % python application.py
 
-* A security group for public access with inbound rules that allow traffic to connect from the internet.
+ * Serving Flask app 'application' (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+ * Running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+```
 
-* A second security group for private access with added inbound rules that allow traffic from your web server only.
-
-* A DB subnet group for VPC that you then designate for your  DB instances.
-
-#### Creating DB instance
-
-Create db instance automatically using cloud formation template in `templates/rds-resource.yaml`
-
+Now we will deploy and run this application on AWS EC2 instance inside a VPC and access it from our
+web browser by configuring security rules
 
 #### Installing and configuring Elastic Beanstalk cli
 
@@ -226,11 +228,25 @@ $PATH
 echo 'export PATH="/Users/rk1103/.ebcli-virtual-env/executables:$PATH"' >> ~/.bash_profile && source ~/.bash_profile
 ```
 
+#### Initilaise Elastic Beanstalk cli repo
+
+Initialize your EB CLI repository with the `eb init` command.
+https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html
+Select the desired options that come up
+e.g.
+
+* Select a default region: us-east-1 : US East (N. Virginia)
+* Enter Application Name : eb-flask
+* It appears you are using Python. Is this correct?  (Y/n): y
+* Select a platform branch:  Python 3.8 running on 64bit Amazon Linux 2
+* Select a keypair: aws-eb  (or create new one)
+
+
 #### Deploy Flask Application to Elastic Beanstalk
 
+Following resources are created and managed by AWS Elastic Beanstalk during deployment
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html
-
-Following resources are created and managed by AWS Elastic Beanstalk during deployment:
+:
 
 * EC2 instance and Load balancer including security groups
 * Auto Scaling group
@@ -238,3 +254,50 @@ Following resources are created and managed by AWS Elastic Beanstalk during depl
 * Amazon CloudWatch alarms
 * AWS CloudFormation stack
 * Domain name
+
+We can deploy the application with selected vpc and subnets already created and vpc security group
+https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-create.html
+
+```
+(virt) (base) rk1103@Ryans-MacBook-Air eb-flask %  eb create eb-flask  --vpc.id vpc-04fbebf4ff05101c6 --vpc.elbpublic --vpc.ec2subnets subnet-0b9a8d47f89cf7849,subnet-0802014b04846f0ed --vpc.securitygroup sg-0808c1d97bf20a775
+```
+
+<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/ELB-cli-create-application-logs.png></img>
+
+
+The EC2 instance created by eb, does not automatically have an elastic IP associated so it can
+only be accessed from inside the VPC using the internal IP. So if required to ssh into it we need to
+assign an Elastic IP to the instance.
+
+* Go into the EC2 dashboard, then in the NETWORK & SECURITY menu go to Elastic IPs.
+* Click on Allocate a new address.
+* Right click on the new IP and select Associate address.
+* Associate it with the EC2 instance
+
+You should now see public ip4 address visible in the instance summary.
+Go to connect -> SSH client for instructions on how to ssh into the instance as below
+
+```
+(virt) (base) rk1103@Ryans-MacBook-Air .ssh %  chmod 400 aws-eb
+(virt) (base) rk1103@Ryans-MacBook-Air .ssh % ssh -i "aws-eb" ec2-user@ec2-18-233-255-138.compute-1.amazonaws.com
+  _____ _           _   _      ____                       _        _ _
+ | ____| | __   ___| |_(_) ___| __ )  ___  __ _ _ __  ___| |_ __ _| | | __
+ |  _| | |/ _ \/ __| __| |/ __|  _ \ / _ \/ _\ | '_ \/ __| __/ _\ | | |/ /
+ | |___| | (_| \__ \ |_| | (__| |_) |  __/ (_| | | | \__ \ || (_| | |   <
+ |_____|_|\__,_|___/\__|_|\___|____/ \___|\__,_|_| |_|___/\__\__,_|_|_|\_\
+
+ Amazon Linux 2 AMI
+
+ This EC2 instance is managed by AWS Elastic Beanstalk. Changes made via SSH
+ WILL BE LOST if the instance is replaced by auto-scaling. For more information
+ on customizing your Elastic Beanstalk environment, see our documentation here:
+ http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/customize-containers-ec2.html
+
+[ec2-user@ip-10-0-1-41 ~]$ ls
+```
+
+
+To terminate the aplication and automatically teardown the resources run `eb terminate eb-flask`
+
+
+<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/ELB-terminate-eb-application.png></img>

@@ -1,0 +1,153 @@
+{
+    "objects": [
+        {
+            "id": "S3InputDataLocation",
+            "name": "S3InputDataLocation",
+            "directoryPath": "#{myInputS3Loc}",
+            "dataFormat": {
+                "ref": "DataFormat1"
+            },
+            "type": "S3DataNode"
+        },
+        {
+            "id": "DestinationRDSTable",
+            "name": "DestinationRDSTable",
+            "database": {
+                "ref": "rds_mysql"
+            },
+            "insertQuery": "#{myRDSTableInsertSql}",
+            "type": "SqlDataNode",
+            "table": "#{myRDSTableName}",
+            "selectQuery": "select * from #{table}"
+        },
+        {
+            "id": "rds_mysql",
+            "name": "rds_mysql",
+            "databaseName": "postgresdev",
+            "*password": "#{*myRDSPassword}",
+            "jdbcProperties": "allowMultiQueries=true",
+            "type": "RdsDatabase",
+            "rdsInstanceId": "#{myRDSInstanceId}",
+            "username": "#{myRDSUsername}"
+        },
+        {
+            "id": "DataLoadActivity",
+            "name": "DataLoadActivity",
+            "output": {
+                "ref": "DestinationRDSTable"
+            },
+            "input": {
+                "ref": "S3InputDataLocation"
+            },
+            "dependsOn": {
+                "ref": "RdsMySqlTableCreateActivity"
+            },
+            "runsOn": {
+                "ref": "Ec2Instance"
+            },
+            "type": "CopyActivity"
+        },
+        {
+            "id": "RdsMySqlTableCreateActivity",
+            "name": "RdsMySqlTableCreateActivity",
+            "database": {
+                "ref": "rds_mysql"
+            },
+            "runsOn": {
+                "ref": "Ec2Instance"
+            },
+            "type": "SqlActivity",
+            "script": "#{myRDSCreateTableSql}"
+        },
+        {
+            "id": "DataFormat1",
+            "name": "DataFormat1",
+            "type": "CSV"
+        },
+        {
+            "id": "Default",
+            "name": "Default",
+            "maxActiveInstances": "2",
+            "failureAndRerunMode": "CASCADE",
+            "resourceRole": "ec2-profile",
+            "role": "DataPipelineDefaultRole",
+            "pipelineLogUri": "s3://data-pipeline-logs1/logs/",
+            "scheduleType": "ONDEMAND"
+        },
+        {
+            "id": "Ec2Instance",
+            "name": "Ec2Instance",
+            "maximumRetries" : "1",
+            "subnetId": "subnet-0802014b04846f0ed",
+            "securityGroupIds" : "sg-0808c1d97bf20a775",
+            "instanceType": "t1.micro",
+            "actionOnTaskFailure": "terminate",
+            "securityGroups": "#{myEc2RdsSecurityGrps}",
+            "associatePublicIpAddress": "true",
+            "type": "Ec2Resource",
+            "terminateAfter": "2 Hours"
+        }
+    ],
+    "parameters": [
+        {
+            "id": "*myRDSPassword",
+            "description": "RDS MySQL password",
+            "type": "String"
+        },
+        {
+            "id": "myEc2RdsSecurityGrps",
+            "watermark": "security group name",
+            "helpText": "The names of one or more EC2 security groups that have access to the RDS MySQL cluster.",
+            "description": "RDS MySQL security group(s)",
+            "isArray": "true",
+            "optional": "true",
+            "type": "String"
+        },
+        {
+            "id": "myInputS3Loc",
+            "description": "Input S3 file path",
+            "type": "AWS::S3::ObjectKey"
+        },
+        {
+            "id": "myRDSUsername",
+            "description": "RDS MySQL username",
+            "type": "String"
+        },
+        {
+            "id": "myRDSTableInsertSql",
+            "helpText": "The SQL statement to insert data into the RDS MySQL table.",
+            "watermark": "INSERT INTO #{table} (col1, col2, col3) VALUES(?, ?, ?) ;",
+            "description": "Insert SQL query",
+            "type": "String"
+        },
+        {
+            "id": "myRDSTableName",
+            "helpText": "The name of an existing table or a new table that will be created based on the create table SQL query parameter below.",
+            "description": "RDS MySQL table name",
+            "type": "String"
+        },
+        {
+            "id": "myRDSInstanceId",
+            "watermark": "DB Instance",
+            "description": "RDS Instance ID",
+            "type": "String"
+        },
+        {
+            "id": "myRDSCreateTableSql",
+            "watermark": "CREATE TABLE pet IF NOT EXISTS (name VARCHAR(20), owner VARCHAR(20), species VARCHAR(20), gender CHAR(1), birth DATE, death DATE);",
+            "helpText": "The idempotent SQL statement to create the RDS MySQL table if it does not already exist.",
+            "description": "Create table SQL query",
+            "optional": "true",
+            "type": "String"
+        }
+    ],
+    "values": {
+        "myRDSInstanceId": "pg-non-default",
+        "myRDSUsername": "<add username>",
+        "myRDSTableInsertSql": "INSERT INTO #{table} (id, email, billing_state, billing_postal, billing_address) VALUES (?, ?, ?, ?, ?)",
+        "*myRDSPassword": "<add password>",
+        "myRDSCreateTableSql": "CREATE TABLE IF NOT EXISTS persons (\n  id INTEGER,\n  email VARCHAR(100),\n  billing_state VARCHAR(3),\n  billing_postal INTEGER,\n  billing_address VARCHAR(255),\n  PRIMARY KEY (id)\n);",
+        "myInputS3Loc": "s3://elasticbeanstalk-us-east-1-376337229415/sample-data.txt",
+        "myRDSTableName": "persons"
+    }
+}
