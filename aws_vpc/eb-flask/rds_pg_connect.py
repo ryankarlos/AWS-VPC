@@ -12,6 +12,7 @@ USER = "ryankarlos"
 REGION = "us-east-1"
 DBNAME = "postgresdev"
 SECRET_NAME = "RDS-DB-credentials"
+query = ["""SELECT COUNT(*) FROM persons""", """SELECT * FROM persons WHERE email LIKE 'fake_cgonzales%'"""]
 
 # gets the credentials from .aws/credentials
 session = boto3.Session(profile_name="default")
@@ -52,20 +53,30 @@ def get_secret():
             return binary_secret_data
 
 
-def query_db(query="""SELECT COUNT(*) FROM persons"""):
+def query_db():
     secret_data = get_secret()
-    password = json.loads(secret_data)["password"]
-    dbname = json.loads(secret_data)["dbname"]
-    dbi = json.loads(secret_data)["dbInstanceIdentifier"]
+    secret_dict = json.loads(secret_data)
+    password = secret_dict["password"]
+    dbname = secret_dict["dbname"]
+    dbi = secret_dict["dbInstanceIdentifier"]
     try:
         conn = psycopg2.connect(
             host=ENDPOINT, port=PORT, database=DBNAME, user=USER, password=password
         )
-        cur = conn.cursor()
-        cur.execute(query)
-        query_result = cur.fetchone()[0]
-        print(query_result)
-        return query_result, dbname, dbi
+        with conn.cursor() as cur:
+            for q in query:
+                cur.execute(q)
+                query_result = cur.fetchall()[0]
+                if len(query_result) < 2:
+                    count_result = query_result[0]
+                else:
+                    person_result = {'email': query_result[1],
+                                     'state': query_result[2],
+                                     'postal': query_result[3],
+                                     'address': query_result[4]}
+        results = {'db_name': dbname, 'db_identifier': dbi, 'total_rows': count_result, 'person_detail': person_result}
+        # print(json.dumps(results, indent=4))
+        return results
     except Exception as e:
         print("Database connection failed due to {}".format(e))
 
