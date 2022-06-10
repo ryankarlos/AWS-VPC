@@ -1,0 +1,17 @@
+jobs:
+  build_and_test:
+    docker:
+      - image: cimg/python:3.9.8
+    steps:
+      - checkout # checkout source code
+      - run: |
+            python --version
+            python -m pip install -r aws_vpc/eb-flask/requirements.txt
+            python -m pip install -r requirements_dev.txt
+      - run:
+          name: Run tests
+          command: tox
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .
