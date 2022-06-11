@@ -9,7 +9,7 @@ jobs:
           command: |
                 python --version
                 pip install -r requirements_dev.txt
-                pip install -r aws_vpc/eb-flask/requirements_dev.txt
+                pip install -r aws_vpc/eb-flask/requirements.txt
       - run:
           name: Run tests
           command: python -m pytest tests/
