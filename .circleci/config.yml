@@ -10,15 +10,17 @@ jobs:
                 python --version
                 pip install -r requirements_dev.txt
                 pip install -r aws_vpc/eb-flask/requirements.txt
+                echo $HOME
       - run:
           name: Run tests
-          command: python -m pytest tests/
+          command: |
+                $HOME/.local/bin/coverage run -m pytest
+                $HOME/.local/bin/coverage report
+                $HOME/.local/bin/coverage html # open htmlcov/index.html in a browser
       - store_artifacts:
-          path: ~/tests
-      - store_test_results:
-          path: ~/tests
+          path: htmlcov
 workflows:
   version: 2
-  tests:
+  test-workflow:
     jobs:
       - tests
