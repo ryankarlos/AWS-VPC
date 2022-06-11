@@ -1,10 +1,10 @@
-import psycopg2
-import sys
-import boto3
-import os
 import json
-from botocore.exceptions import ClientError
+import os
+import sys
 
+import boto3
+import psycopg2
+from botocore.exceptions import ClientError
 
 ENDPOINT = "pg-non-default.cg9we74vymgv.us-east-1.rds.amazonaws.com"
 PORT = "5432"
@@ -12,7 +12,10 @@ USER = "ryankarlos"
 REGION = "us-east-1"
 DBNAME = "postgresdev"
 SECRET_NAME = "RDS-DB-credentials"
-query = ["""SELECT COUNT(*) FROM persons""", """SELECT * FROM persons WHERE email LIKE 'fake_cgonzales%'"""]
+query = [
+    """SELECT COUNT(*) FROM persons""",
+    """SELECT * FROM persons WHERE email LIKE 'fake_cgonzales%'""",
+]
 
 # gets the credentials from .aws/credentials
 session = boto3.Session(profile_name="default")
@@ -70,11 +73,18 @@ def query_db():
                 if len(query_result) < 2:
                     count_result = query_result[0]
                 else:
-                    person_result = {'email': query_result[1],
-                                     'state': query_result[2],
-                                     'postal': query_result[3],
-                                     'address': query_result[4]}
-        results = {'db_name': dbname, 'db_identifier': dbi, 'total_rows': count_result, 'person_detail': person_result}
+                    person_result = {
+                        "email": query_result[1],
+                        "state": query_result[2],
+                        "postal": query_result[3],
+                        "address": query_result[4],
+                    }
+        results = {
+            "db_name": dbname,
+            "db_identifier": dbi,
+            "total_rows": count_result,
+            "person_detail": person_result,
+        }
         # print(json.dumps(results, indent=4))
         return results
     except Exception as e:

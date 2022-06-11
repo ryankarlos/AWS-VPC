@@ -5,14 +5,13 @@ jobs:
     steps:
       - checkout # checkout source code
       - run:
-          name: Install dependencies
+          name: Check python version and install tox
           command: |
                 python --version
-                python -m pip install -r aws_vpc/eb-flask/requirements.txt
-                python -m pip install -r requirements_dev.txt
+                pip install tox
       - run:
           name: Run tests
-          command: tox
+          command: python -m tox
       - store_artifacts:
           path: ~/tests
 workflows:
