@@ -17,14 +17,14 @@ query = [
     """SELECT * FROM persons WHERE email LIKE 'fake_cgonzales%'""",
 ]
 
-ssm = boto3.client('ssm')
+ssm = boto3.client('ssm', region_name='us-east-1')
 access_key_id = ssm.get_parameter(Name='ACCESS_KEY_ID', WithDecryption=True)['Parameter']['Value']
 secret_access_key = ssm.get_parameter(Name='SECRET_ACCESS_KEY', WithDecryption=True)['Parameter']['Value']
 
 
 # gets the credentials from .aws/credentials
 session = boto3.Session(aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
-client = session.client("rds")
+client = session.client("rds", region_name='us-east-1')
 
 
 def get_secret():
