@@ -17,8 +17,13 @@ query = [
     """SELECT * FROM persons WHERE email LIKE 'fake_cgonzales%'""",
 ]
 
+ssm = boto3.client('ssm')
+access_key_id = ssm.get_parameter(Name='ACCESS_KEY_ID', WithDecryption=True)['Parameter']['Value']
+secret_access_key = ssm.get_parameter(Name='SECRET_ACCESS_KEY', WithDecryption=True)['Parameter']['Value']
+
+
 # gets the credentials from .aws/credentials
-session = boto3.Session(profile_name="default")
+session = boto3.Session(aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
 client = session.client("rds")
 
 
@@ -85,6 +90,7 @@ def query_db():
             "total_rows": count_result,
             "person_detail": person_result,
         }
+        # uncomment for debugging
         # print(json.dumps(results, indent=4))
         return results
     except Exception as e:
