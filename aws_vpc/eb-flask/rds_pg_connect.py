@@ -5,31 +5,21 @@ import sys
 import boto3
 import psycopg2
 from botocore.exceptions import ClientError
-
-ENDPOINT = "pg-non-default.cg9we74vymgv.us-east-1.rds.amazonaws.com"
-PORT = "5432"
-USER = "ryankarlos"
-REGION = "us-east-1"
-DBNAME = "postgresdev"
-SECRET_NAME = "RDS-DB-credentials"
-query = [
-    """SELECT COUNT(*) FROM persons""",
-    """SELECT * FROM persons WHERE email LIKE 'fake_cgonzales%'""",
-]
-
-ssm = boto3.client('ssm', region_name='us-east-1')
-access_key_id = ssm.get_parameter(Name='ACCESS_KEY_ID', WithDecryption=True)['Parameter']['Value']
-secret_access_key = ssm.get_parameter(Name='SECRET_ACCESS_KEY', WithDecryption=True)['Parameter']['Value']
-
-
-# gets the credentials from .aws/credentials
-session = boto3.Session(aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
-client = session.client("rds", region_name='us-east-1')
-
+from constants import query, REGION, SECRET_NAME
 
 def get_secret():
+    ssm = boto3.client("ssm", region_name="us-east-1")
+    access_key_id = ssm.get_parameter(Name="ACCESS_KEY_ID", WithDecryption=True)[
+        "Parameter"
+    ]["Value"]
+    secret_access_key = ssm.get_parameter(
+        Name="SECRET_ACCESS_KEY", WithDecryption=True
+    )["Parameter"]["Value"]
 
-    session = boto3.session.Session()
+    session = boto3.Session(
+        aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key
+    )
+
     client = session.client(
         service_name="secretsmanager",
         region_name=REGION,
@@ -61,15 +51,18 @@ def get_secret():
             return binary_secret_data
 
 
-def query_db():
+def query_db(query):
     secret_data = get_secret()
     secret_dict = json.loads(secret_data)
     password = secret_dict["password"]
+    user = secret_dict["username"]
     dbname = secret_dict["dbname"]
+    endpoint = secret_dict["host"]
+    port = secret_dict["port"]
     dbi = secret_dict["dbInstanceIdentifier"]
     try:
         conn = psycopg2.connect(
-            host=ENDPOINT, port=PORT, database=DBNAME, user=USER, password=password
+            host=endpoint, port=port, database=dbname, user=user, password=password
         )
         with conn.cursor() as cur:
             for q in query:
@@ -98,4 +91,4 @@ def query_db():
 
 
 if __name__ == "__main__":
-    query_db()
+    query_db(query)

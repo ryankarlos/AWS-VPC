@@ -5,19 +5,14 @@ import boto3
 import psycopg2
 from flask import Flask
 from rds_pg_connect import query_db
+import logging
+from constants import header_text, home_link, footer_text, query
 
-header_text = """
-    <html>\n<head> <title>EB Flask Test</title> </head>"""
-home_link = '<p><a href="/">Back</a></p>\n'
-footer_text = (
-    "\n<footer><p><em>Hint</em>: This is a RESTful web service! Append a username "
-    "to the URL (for example: <code>/John</code>) to say hello to "
-    "someone specific.</p></p></footer></html>"
-)
+log = logging.getLogger("werkzeug")
 
 
 def say_hello(username="AWS user"):
-    results = query_db()
+    results = query_db(query)
     dbname = results["db_name"]
     count = results["total_rows"]
     email = results["person_detail"]["email"]
@@ -51,7 +46,7 @@ def main(debug=False):
         (lambda username: header_text + say_hello(username) + home_link),
     )
     application.debug = debug
-    application.run()
+    application.run(host="0.0.0.0", port=80)
 
 
 if __name__ == "__main__":
