@@ -6,4 +6,4 @@
 cd /home/ec2-user/sample-app
 
 # this runs silently in background after exiting terminal
-sudo nohup python3.8 application.py &
+sudo nohup python3.8 application.py 2>&1 > nohup.out &
