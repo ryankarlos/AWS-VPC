@@ -4,7 +4,7 @@ import sys
 import boto3
 import psycopg2
 from flask import Flask
-from rds_pg_connect import query_db
+from db_connect import query_rds
 import logging
 from constants import header_text, home_link, footer_text, query
 
@@ -12,7 +12,7 @@ log = logging.getLogger("werkzeug")
 
 
 def say_hello(username="AWS user"):
-    results = query_db(query)
+    results = query_rds(query)
     dbname = results["db_name"]
     count = results["total_rows"]
     email = results["person_detail"]["email"]

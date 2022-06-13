@@ -25,52 +25,16 @@ Parameters:
     MinValue: '20'
     MaxValue: '50'
     ConstraintDescription: must be between 20 and 50 GiB.
-  EC2DefaultSecurity:
-    Default: 'sg-0afdf2d5ce4c8ed3e'
-    Description: The id of EC2 security group id attached to default VPC
-    Type: String
-    AllowedPattern: 'sg-[a-zA-Z0-9]*'
-    ConstraintDescription: must begin with sg- and contain alphanumeric characters
   UserIP:
       AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
       ConstraintDescription: "It must be a valid IP CIDR range of the form x.x.x.x/x. Suggest to enable access to your IP address only. Pls get your address using checkip.amazonaws.com or whatsmyip.org."
       Description: "The IP address range that can be used to connect to the RDS instances from your local machine.It must be a valid IP CIDR range of the form x.x.x.x/x.Pls get your address using checkip.amazonaws.com or whatsmyip.org"
       Type: "String"
+  InstanceType:
+      Default: 't2.micro'
+      Description: EC2 Instance type to use. Default is t2.micro
+      Type: String
 Resources:
-  EC2SecurityGroup:
-      Type: AWS::EC2::SecurityGroup
-      Properties:
-          GroupDescription: "EC2 for non-default VPC"
-          VpcId:
-            Fn::GetAtt:
-              - NestedVPCStack
-              - Outputs.VPC
-          SecurityGroupIngress:
-              -   IpProtocol: tcp
-                  FromPort: 0
-                  ToPort: 65535
-              -   IpProtocol: icmp
-                  FromPort: 8
-                  ToPort: -1
-                  CidrIp: !Ref UserIP
-              -   IpProtocol: tcp
-                  FromPort: 22
-                  ToPort: 22
-                  CidrIp: !Ref UserIP
-              -   IpProtocol: tcp
-                  FromPort: 80
-                  ToPort: 80
-                  CidrIp: "0.0.0.0/0"
-              -   IpProtocol: tcp
-                  FromPort: 443
-                  ToPort: 443
-                  CidrIp: "0.0.0.0/0"
-          SecurityGroupEgress:
-              -   CidrIp: "0.0.0.0/0"
-                  IpProtocol: "-1"
-          Tags:
-              -   Key: Name
-                  Value: EC2-non-default
   NestedRDSStack:
     Type: 'AWS::CloudFormation::Stack'
     DeletionPolicy: Retain
@@ -80,23 +44,23 @@ Resources:
       Parameters:
           DBUsername: !Ref RDSDBUsername
           DBPassword: !Ref RDSDBPassword
-          PublicSubnet1:
-                Fn::GetAtt:
-                    - NestedVPCStack
-                    - Outputs.PublicSubnet1
-          PublicSubnet2:
-                Fn::GetAtt:
-                    - NestedVPCStack
-                    - Outputs.PublicSubnet2
-          PrivateSubnet:
-                Fn::GetAtt:
+          Subnet1:
+               Fn::GetAtt:
                     - NestedVPCStack
                     - Outputs.PrivateSubnet1
+          Subnet2:
+                Fn::GetAtt:
+                    - NestedVPCStack
+                    - Outputs.PrivateSubnet2
           VPC:
                 Fn::GetAtt:
                     - NestedVPCStack
                     - Outputs.VPC
           ClientIP: !Ref UserIP
+          EC2SecurityGroup:
+                Fn::GetAtt:
+                    - NestedEC2Stack
+                    - Outputs.EC2SecurityGroup
   NestedRedshiftStack:
     Type: 'AWS::CloudFormation::Stack'
     DeletionPolicy: Retain
@@ -106,6 +70,27 @@ Resources:
       Parameters:
           Username: !Ref RedshiftUsername
           Password: !Ref RedshiftPassword
+          EC2SecurityGroup:
+              Fn::GetAtt:
+                  - NestedEC2Stack
+                  - Outputs.EC2SecurityGroup
+  NestedEC2Stack:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: >-
+        https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/ec2.yaml
+      Parameters:
+          Subnet:
+              Fn::GetAtt:
+                  - NestedVPCStack
+                  - Outputs.PublicSubnet1
+          VPC:
+              Fn::GetAtt:
+                  - NestedVPCStack
+                  - Outputs.VPC
+          ClientIP: !Ref UserIP
+          InstanceTypeParameter: !Ref InstanceType
   NestedVPCStack:
     Type: 'AWS::CloudFormation::Stack'
     DeletionPolicy: Retain

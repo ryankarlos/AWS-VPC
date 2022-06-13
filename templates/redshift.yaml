@@ -37,12 +37,11 @@ Parameters:
     Description: "Name of redshift db"
     Default: dev
     Type: "String"
-  RSDefaultSecurity:
-      Default: "sg-0c590da7a0c761d85"
-      Description: The id of Redshift security group id attached to default VPC
-      Type: String
-      AllowedPattern: 'sg-[a-zA-Z0-9]*'
-      ConstraintDescription: must begin with sg- and contain alphanumeric characters
+  EC2Security:
+    Description: The id of EC2 security group for allowing acess to RDS
+    Type: String
+    AllowedPattern: 'sg-[a-zA-Z0-9]*'
+    ConstraintDescription: must begin with sg- and contain alphanumeric characters
 Resources:
   RedshiftCluster:
     Type: "AWS::Redshift::Cluster"
@@ -77,3 +76,23 @@ Resources:
       Properties:
           Description: "Default VPC Public Subnet Group available for the default Redshift Cluster"
           SubnetIds: [!Ref Subnet1, !Ref Subnet2, !Ref Subnet3]
+  RSDefaultSecurity:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: "Redshift in default vpc"
+            VpcId: "vpc-09eeb45f883f8307c"
+            SecurityGroupIngress:
+                -   IpProtocol: tcp
+                    FromPort: 5439
+                    ToPort:  5439
+                    SourceSecurityGroupId: !Ref EC2Security
+                -   IpProtocol: tcp
+                    FromPort: 5439
+                    ToPort: 5439
+                    CidrIp: !Ref ClientIP
+            SecurityGroupEgress:
+                -   CidrIp: "0.0.0.0/0"
+                    IpProtocol: "-1"
+            Tags:
+                -   Key: Name
+                    Value: Redshift-default

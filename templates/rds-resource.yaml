@@ -9,9 +9,9 @@ Mappings:
         id: "oracle-non-default"
     postgres:
       EngineVersion:
-        ver: "14.1"
+        ver: "13.4"
       InstanceType:
-        inst: "db.t4g.medium"
+        inst: "db.t3.micro"
       InstanceID:
         id: "postgres-non-default"
     mysql:
@@ -57,18 +57,20 @@ Parameters:
     MinValue: '20'
     MaxValue: '50'
     ConstraintDescription: must be between 20 and 50 GiB.
-  PublicSubnet1:
-      Description: "VPC Public Subnet 1 ind for RDS subnet group"
+  Subnet1:
+      Description: "VPC Public/Private Subnet 1 ind for RDS subnet group"
       Type: "String"
-  PublicSubnet2:
-      Description: "VPC Public subnet 2 for RDS subnet group"
-      Type: "String"
-  PrivateSubnet:
-      Description: "VPC Private subnet for RDS subnet group"
+  Subnet2:
+      Description: "VPC Public/Private subnet 2 for RDS subnet group"
       Type: "String"
   VPC:
       Description: "VPC Id for RDS DB Security Group"
       Type: "String"
+  EC2Security:
+    Description: The id of EC2 security group for allowing acess to RDS
+    Type: String
+    AllowedPattern: 'sg-[a-zA-Z0-9]*'
+    ConstraintDescription: must begin with sg- and contain alphanumeric characters
   ClientIP:
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: "It must be a valid IP CIDR range of the form x.x.x.x/x. Suggest to enable access to your IP address only. Pls get your address using checkip.amazonaws.com or whatsmyip.org."
@@ -148,7 +150,7 @@ Resources:
       Properties:
           DBSubnetGroupDescription: "RDS Subnet Group with two public and one pvt subnet"
           DBSubnetGroupName: "RDS Subnet Group Name"
-          SubnetIds: [!Ref PublicSubnet1, !Ref PublicSubnet2, !Ref PrivateSubnet]
+          SubnetIds: [!Ref Subnet1, !Ref Subnet2]
   RDSSecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
@@ -156,17 +158,13 @@ Resources:
           VpcId: !Ref VPC
           SecurityGroupIngress:
               -   IpProtocol: tcp
-                  FromPort: 5432
-                  ToPort: 5432
+                  FromPort: 1000
+                  ToPort: 6000
                   CidrIp: !Ref ClientIP
               -   IpProtocol: tcp
-                  FromPort: 1433
-                  ToPort: 1433
-                  CidrIp: !Ref ClientIP
-              -   IpProtocol: icmp
-                  FromPort: 8
-                  ToPort: -1
-                  CidrIp: !Ref ClientIP
+                  FromPort: 1000
+                  ToPort:  6000
+                  SourceSecurityGroupId: !Ref EC2Security
           SecurityGroupEgress:
               -   CidrIp: "0.0.0.0/0"
                   IpProtocol: "-1"

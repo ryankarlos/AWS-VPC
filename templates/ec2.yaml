@@ -1,0 +1,79 @@
+Description: "Creates an ec2 instance in desiered vpc subnet"
+Parameters:
+  InstanceTypeParameter:
+    Type: String
+    Description: Enter instance size. Default is t2.micro.
+  Subnet:
+    Description: "VPC Public Subnet for ec2 subnet group"
+    Type: "String"
+  AMI:
+    Default: ami-0022f774911c1d690
+    Type: String
+    Description: "The AMI to use. Default is AWS Linux AMI"
+  KeyName:
+    Default: "aws-eb"
+    Description: " The key used to access the instance."
+    Type: "String"
+  VPC:
+      Description: "VPC Id for EC2 Security Group"
+      Type: "String"
+  ClientIP:
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: "It must be a valid IP CIDR range of the form x.x.x.x/x. Suggest to enable access to your IP address only. Pls get your address using checkip.amazonaws.com or whatsmyip.org."
+    Description: "The IP address range that can be used to connect to the RDS instances from your local machine.It must be a valid IP CIDR range of the form x.x.x.x/x.Pls get your address using checkip.amazonaws.com or whatsmyip.org"
+    Type: "String"
+Resources:
+    EC2Instance:
+      Type: AWS::EC2::Instance
+      Properties:
+        ImageId: !Ref AMI
+        SubnetId:
+            Ref: "Subnet"
+        KeyName: !Ref KeyName
+        InstanceType:
+            Ref: InstanceTypeParameter
+        SecurityGroupIds:
+            -   Ref: EC2SecurityGroup
+    ElasticIP:
+        Type: AWS::EC2::EIP
+        Properties:
+            Domain: vpc
+            InstanceId: !Ref EC2Instance
+    EC2SecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: "EC2 in non default vpc"
+            VpcId: !Ref VPC
+            SecurityGroupIngress:
+                -   IpProtocol: tcp
+                    FromPort: 80
+                    ToPort: 80
+                    CidrIp: "0.0.0.0/0"
+                -   IpProtocol: tcp
+                    FromPort: 443
+                    ToPort: 443
+                    CidrIp: "0.0.0.0/0"
+                -   IpProtocol: tcp
+                    FromPort: 22
+                    ToPort: 22
+                    CidrIp: !Ref ClientIP
+                -   IpProtocol: icmp
+                    FromPort: 8
+                    ToPort: -1
+                    CidrIp: !Ref ClientIP
+            SecurityGroupEgress:
+                -   CidrIp: "0.0.0.0/0"
+                    IpProtocol: "-1"
+            Tags:
+                -   Key: Name
+                    Value: EC2-non-default
+Outputs:
+  EC2SecurityGroup:
+    Description: A reference to the EC2 security group
+    Value: !Ref EC2SecurityGroup
+  PublicIp:
+    Value:
+      Fn::GetAtt:
+        - EC2Instance
+        - PublicIp
+    Description: Server's PublicIp Address

@@ -7,6 +7,7 @@ import psycopg2
 from botocore.exceptions import ClientError
 from constants import query, REGION, SECRET_NAME
 
+
 def get_secret():
     ssm = boto3.client("ssm", region_name="us-east-1")
     access_key_id = ssm.get_parameter(Name="ACCESS_KEY_ID", WithDecryption=True)[
@@ -51,7 +52,7 @@ def get_secret():
             return binary_secret_data
 
 
-def query_db(query):
+def query_rds(query):
     secret_data = get_secret()
     secret_dict = json.loads(secret_data)
     password = secret_dict["password"]
@@ -91,4 +92,4 @@ def query_db(query):
 
 
 if __name__ == "__main__":
-    query_db(query)
+    query_rds(query)
