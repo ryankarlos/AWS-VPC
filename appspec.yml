@@ -4,6 +4,10 @@ files:
   - source: /aws_vpc/eb-flask
     destination: /home/ec2-user/sample-app
 hooks:
+  ApplicationStop:
+    - location: scripts/stop_server.sh
+      timeout: 300
+      runas: root
   BeforeInstall:
     - location: scripts/install_dependencies.sh
       timeout: 300

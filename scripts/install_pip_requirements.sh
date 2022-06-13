@@ -1,4 +1,4 @@
-
+#!/bin/bash
 
 # This is run in AfterInstall stage in appspec - so required app folder is recursively copied to required location
 # as specified in files: section. So need to cd into the location in ec2 it was copied and then install
