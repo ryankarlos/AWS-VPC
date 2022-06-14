@@ -68,14 +68,21 @@ An error occurred (ValidationError) when calling the ValidateTemplate operation:
 ```
 
 To create all the nested stacks and root stack, use create-stack action for cloudformation via cli https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html
+First copy all the child stack templates to S3 bucket as these are referenced in the root template
+
+```
+aws s3 cp templates/ s3://cf-templates-wnxns0c4jjl4-us-east-1 --recursive
+```
+
 Replace <username> and <password> with the required usernames and passwords you wish to set for redhsift cluster and rds db instance
 respectively. <ip> should be the client ip you wish to grant access to the db (must be of the format 191.255.255.255/24). Note the trailing
 slash .Can be checked by launching EC2 instance from console - Network Settings -> tick the 'Allow SSH traffic from' box and select 'My IP'
 from the dropdown which should show your IP address in the required format.
 
+
 ```
 $ aws cloudformation create-stack \
-> --stack-name Nested-RDS-Redshift-VPC \
+> --stack-name Nested-RDS-Redshift-EC2-VPC \
 > --template-body file://templates/nested-stack.yaml \
 > --parameters ParameterKey=RDSDBUsername,ParameterValue=<username> \
 > ParameterKey=RDSDBPassword,ParameterValue=<password> \

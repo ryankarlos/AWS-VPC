@@ -22,6 +22,13 @@ Parameters:
     ConstraintDescription: "It must be a valid IP CIDR range of the form x.x.x.x/x. Suggest to enable access to your IP address only. Pls get your address using checkip.amazonaws.com or whatsmyip.org."
     Description: "The IP address range that can be used to connect to the RDS instances from your local machine.It must be a valid IP CIDR range of the form x.x.x.x/x.Pls get your address using checkip.amazonaws.com or whatsmyip.org"
     Type: "String"
+  Elasticip:
+    Description: Whether to associate elastic ip for EC2
+    Type: String
+Conditions:
+  CreateElasticIP: !Equals
+    - !Ref Elasticip
+    - true
 Resources:
     EC2Instance:
       Type: AWS::EC2::Instance
@@ -36,6 +43,7 @@ Resources:
             -   Ref: EC2SecurityGroup
     ElasticIP:
         Type: AWS::EC2::EIP
+        Condition: CreateElasticIP
         Properties:
             Domain: vpc
             InstanceId: !Ref EC2Instance

@@ -21,6 +21,13 @@ Parameters:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
     Type: String
     Default: 10.0.3.0/24
+  NatGateway:
+    Description: Whether to create NATGateway for private subnet or not
+    Type: String
+Conditions:
+  CreateNatGateway: !Equals
+    - !Ref NatGateway
+    - true
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
@@ -80,29 +87,17 @@ Resources:
     Properties:
       Tags:
         - { Key: "Application", Value: "non-default" }
-  NatGateway1EIP:
+  NatGatewayEIP:
     Type: AWS::EC2::EIP
+    Condition: CreateNatGateway
     DependsOn: AttachGateway
     Properties:
       Domain: vpc
-  NatGateway2EIP:
-    Type: AWS::EC2::EIP
-    DependsOn: AttachGateway
-    Properties:
-      Domain: vpc
-  NATGateway1:
+  NATGateway:
     Type: "AWS::EC2::NatGateway"
+    Condition: CreateNatGateway
     Properties:
-      AllocationId: !GetAtt NatGateway1EIP.AllocationId
-      SubnetId:
-        Ref: "PublicSubnet1"
-      Tags:
-        - Key: "Application"
-          Value: "non-default"
-  NATGateway2:
-    Type: "AWS::EC2::NatGateway"
-    Properties:
-      AllocationId: !GetAtt NatGateway2EIP.AllocationId
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
       SubnetId:
         Ref: "PublicSubnet2"
       Tags:
@@ -122,8 +117,7 @@ Resources:
               - '*'
       RouteTableIds:
         - !Ref PublicRouteTable
-        - !Ref PrivateRouteTable1
-        - !Ref PrivateRouteTable2
+        - !Ref PrivateRouteTable
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
       VpcId:
         Ref: "VPC"
@@ -134,11 +128,7 @@ Resources:
         Ref: "InternetGateway"
       VpcId:
         Ref: "VPC"
-  PrivateRouteTable1:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-  PrivateRouteTable2:
+  PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
@@ -146,18 +136,12 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
-  PrivateRoute1:
+  PrivateRoute:
     Type: AWS::EC2::Route
     Properties:
-      RouteTableId: !Ref PrivateRouteTable1
+      RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NATGateway1
-  PrivateRoute2:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable2
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NATGateway2
+      NatGatewayId: !Ref NATGateway
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
@@ -168,12 +152,12 @@ Resources:
   PrivateSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref PrivateRouteTable1
+      RouteTableId: !Ref PrivateRouteTable
       SubnetId: !Ref PrivateSubnet1
   PrivateSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref PrivateRouteTable2
+      RouteTableId: !Ref PrivateRouteTable
       SubnetId: !Ref PrivateSubnet2
   PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation

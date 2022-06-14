@@ -34,6 +34,14 @@ Parameters:
       Default: 't2.micro'
       Description: EC2 Instance type to use. Default is t2.micro
       Type: String
+  CreateNatGateway:
+    Description: Whether to create NATGateway for private subnet or not
+    Type: String
+    Default: false
+  CreateElasticIP:
+    Description: Whether to associate elastic ip for EC2
+    Type: String
+    Default: false
 Resources:
   NestedRDSStack:
     Type: 'AWS::CloudFormation::Stack'
@@ -70,6 +78,7 @@ Resources:
       Parameters:
           Username: !Ref RedshiftUsername
           Password: !Ref RedshiftPassword
+          ClientIP: !Ref UserIP
           EC2SecurityGroup:
               Fn::GetAtt:
                   - NestedEC2Stack
@@ -91,9 +100,12 @@ Resources:
                   - Outputs.VPC
           ClientIP: !Ref UserIP
           InstanceTypeParameter: !Ref InstanceType
+          ElasticIP: !Ref CreateElasticIP
   NestedVPCStack:
     Type: 'AWS::CloudFormation::Stack'
     DeletionPolicy: Retain
     Properties:
       TemplateURL: >-
         https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/vpc.yaml
+      Parameters:
+           NATGateway: !Ref CreateNatGateway
