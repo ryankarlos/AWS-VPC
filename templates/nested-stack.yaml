@@ -65,7 +65,7 @@ Resources:
                     - NestedVPCStack
                     - Outputs.VPC
           ClientIP: !Ref UserIP
-          EC2SecurityGroup:
+          EC2Security:
                 Fn::GetAtt:
                     - NestedEC2Stack
                     - Outputs.EC2SecurityGroup
@@ -79,7 +79,7 @@ Resources:
           Username: !Ref RedshiftUsername
           Password: !Ref RedshiftPassword
           ClientIP: !Ref UserIP
-          EC2SecurityGroup:
+          EC2Security:
               Fn::GetAtt:
                   - NestedEC2Stack
                   - Outputs.EC2SecurityGroup
@@ -100,7 +100,7 @@ Resources:
                   - Outputs.VPC
           ClientIP: !Ref UserIP
           InstanceTypeParameter: !Ref InstanceType
-          ElasticIP: !Ref CreateElasticIP
+          Elasticip: !Ref CreateElasticIP
   NestedVPCStack:
     Type: 'AWS::CloudFormation::Stack'
     DeletionPolicy: Retain
@@ -108,4 +108,4 @@ Resources:
       TemplateURL: >-
         https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/vpc.yaml
       Parameters:
-           NATGateway: !Ref CreateNatGateway
+           NatGateway: !Ref CreateNatGateway

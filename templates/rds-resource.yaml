@@ -148,7 +148,7 @@ Resources:
   RDSSubnetGroup:
       Type: "AWS::RDS::DBSubnetGroup"
       Properties:
-          DBSubnetGroupDescription: "RDS Subnet Group with two public and one pvt subnet"
+          DBSubnetGroupDescription: "RDS Subnet Group Subnets in non default VPC"
           DBSubnetGroupName: "RDS Subnet Group Name"
           SubnetIds: [!Ref Subnet1, !Ref Subnet2]
   RDSSecurityGroup:

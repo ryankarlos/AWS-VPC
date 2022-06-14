@@ -23,11 +23,17 @@ Parameters:
     Default: 10.0.3.0/24
   NatGateway:
     Description: Whether to create NATGateway for private subnet or not
+    AllowedValues:
+        - true
+        - false
     Type: String
 Conditions:
   CreateNatGateway: !Equals
     - !Ref NatGateway
     - true
+  NoNatGateway: !Equals
+    - !Ref NatGateway
+    - false
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
@@ -38,6 +44,11 @@ Resources:
       Tags:
         - Key: Name
           Value: vpc-2-pub-priv
+  VPCPeeringConnection:
+    Type: AWS::EC2::VPCPeeringConnection
+    Properties:
+      PeerVpcId: "vpc-09eeb45f883f8307c"
+      VpcId: !Ref VPC
   PublicSubnet1:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -136,8 +147,9 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
-  PrivateRoute:
+  PrivateRoutewithNat:
     Type: AWS::EC2::Route
+    Condition: CreateNatGateway
     Properties:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0

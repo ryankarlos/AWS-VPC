@@ -24,6 +24,9 @@ Parameters:
     Type: "String"
   Elasticip:
     Description: Whether to associate elastic ip for EC2
+    AllowedValues:
+        - true
+        - false
     Type: String
 Conditions:
   CreateElasticIP: !Equals

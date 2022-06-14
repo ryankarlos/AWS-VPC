@@ -67,29 +67,51 @@ $ aws cloudformation validate-template --template-body file://templates/redshift
 An error occurred (ValidationError) when calling the ValidateTemplate operation: Template format error: Unrecognized parameter type: Bool
 ```
 
-To create all the nested stacks and root stack, use create-stack action for cloudformation via cli https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html
-First copy all the child stack templates to S3 bucket as these are referenced in the root template
-
-```
-aws s3 cp templates/ s3://cf-templates-wnxns0c4jjl4-us-east-1 --recursive
-```
-
-Replace <username> and <password> with the required usernames and passwords you wish to set for redhsift cluster and rds db instance
+Running the bash script create_stacks.sh in templates folder will create all the nested stacks and root stack,
+using the create-stack action for cloudformation via cli https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html
+Prior to doing this, it will also copy all the child stack templates to S3 bucket as these paths are referenced in the root template.
+When running the command below, replace <username> and <password> with the required usernames and passwords you wish to set for redhsift cluster and rds db instance
 respectively. <ip> should be the client ip you wish to grant access to the db (must be of the format 191.255.255.255/24). Note the trailing
 slash .Can be checked by launching EC2 instance from console - Network Settings -> tick the 'Allow SSH traffic from' box and select 'My IP'
 from the dropdown which should show your IP address in the required format.
 
 
 ```
-$ aws cloudformation create-stack \
-> --stack-name Nested-RDS-Redshift-EC2-VPC \
-> --template-body file://templates/nested-stack.yaml \
-> --parameters ParameterKey=RDSDBUsername,ParameterValue=<username> \
-> ParameterKey=RDSDBPassword,ParameterValue=<password> \
-> ParameterKey=RedshiftUsername,ParameterValue=<username> \
-> ParameterKey=RedshiftPassword,ParameterValue=<password> \
-> ParameterKey=UserIP,ParameterValue=<ip>
-  ```
+$ sh templates/create_stacks.sh <username> <password> <ip>
+
+Uploading templates to s3:
+upload: templates/create_stacks.sh to s3://cf-templates-wnxns0c4jjl4-us-east-1/create_stacks.sh
+upload: templates/redshift.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/redshift.yaml
+upload: templates/resourcesToImport.txt to s3://cf-templates-wnxns0c4jjl4-us-east-1/resourcesToImport.txt
+upload: templates/nested-stack.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/nested-stack.yaml
+upload: templates/vpc.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/vpc.yaml
+upload: templates/ec2.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/ec2.yaml
+upload: templates/rds-resource.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/rds-resource.yaml
+
+Creating nested stacks:
+
+{
+    "StackId": "<arn>"
+}
+```
+
+To teardown the cloudformation stacks run the teardown.sh bash script. This assumes the root stack name
+is `Nested-RDS-Redshift-EC2-VPC`
+
+```
+$ sh templates/teardown.sh
+
+Deleting stack "Nested-RDS-Redshift-EC2-VPC-NestedRDSStack-BSEMIHK53ZLW",
+
+Deleting stack "Nested-RDS-Redshift-EC2-VPC-NestedRedshiftStack-AFT0JOJNX7YV",
+
+Deleting stack "Nested-RDS-Redshift-EC2-VPC-NestedEC2Stack-CH12LH075898",
+
+Deleting stack "Nested-RDS-Redshift-EC2-VPC-NestedVPCStack-1BIMJOPPQGS81",
+
+Deleting stack "Nested-RDS-Redshift-EC2-VPC",
+
+```
 
  Alternatively, from the console:
     * create stack with new resources
