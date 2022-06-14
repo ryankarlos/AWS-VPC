@@ -67,7 +67,7 @@ $ aws cloudformation validate-template --template-body file://templates/redshift
 An error occurred (ValidationError) when calling the ValidateTemplate operation: Template format error: Unrecognized parameter type: Bool
 ```
 
-Running the bash script create_stacks.sh in templates folder will create all the nested stacks and root stack,
+Running the bash script create_stacks.sh  will create all the nested stacks and root stack,
 using the create-stack action for cloudformation via cli https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html
 Prior to doing this, it will also copy all the child stack templates to S3 bucket as these paths are referenced in the root template.
 When running the command below, replace <username> and <password> with the required usernames and passwords you wish to set for redhsift cluster and rds db instance
@@ -77,7 +77,7 @@ from the dropdown which should show your IP address in the required format.
 
 
 ```
-$ sh templates/create_stacks.sh <username> <password> <ip>
+$ sh aws_vpc/create_stacks.sh <username> <password> <ip>
 
 Uploading templates to s3:
 upload: templates/create_stacks.sh to s3://cf-templates-wnxns0c4jjl4-us-east-1/create_stacks.sh
@@ -99,7 +99,7 @@ To teardown the cloudformation stacks run the teardown.sh bash script. This assu
 is `Nested-RDS-Redshift-EC2-VPC`
 
 ```
-$ sh templates/teardown.sh
+$ sh aws_vpc/teardown.sh
 
 Deleting stack "Nested-RDS-Redshift-EC2-VPC-NestedRDSStack-BSEMIHK53ZLW",
 
