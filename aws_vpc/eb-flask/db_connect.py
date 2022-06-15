@@ -91,5 +91,49 @@ def query_rds(query):
         print("Database connection failed due to {}".format(e))
 
 
+def query_redshift(query):
+    secret_data = get_secret()
+    secret_dict = json.loads(secret_data)
+    password = secret_dict["password"]
+    user = secret_dict["username"]
+    client = boto3.client('redshift-data')
+
+    try:
+        response = client.batch_execute_statement(
+            ClusterIdentifier='string',
+            Database='string',
+            DbUser=user,
+            SecretArn='string',
+            Sqls=[
+                'string',
+            ],
+            StatementName='string',
+        )
+        with conn.cursor() as cur:
+            for q in query:
+                cur.execute(q)
+                query_result = cur.fetchall()[0]
+                if len(query_result) < 2:
+                    count_result = query_result[0]
+                else:
+                    person_result = {
+                        "email": query_result[1],
+                        "state": query_result[2],
+                        "postal": query_result[3],
+                        "address": query_result[4],
+                    }
+        results = {
+            "db_name": dbname,
+            "db_identifier": dbi,
+            "total_rows": count_result,
+            "person_detail": person_result,
+        }
+        # uncomment for debugging
+        # print(json.dumps(results, indent=4))
+        return results
+    except Exception as e:
+        print("Database connection failed due to {}".format(e))
+
+
 if __name__ == "__main__":
     query_rds(query)

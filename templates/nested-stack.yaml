@@ -1,5 +1,21 @@
 Description: "This template creates a nested stack with redshift resource in a vpc and rds resource in another vpc"
 Parameters:
+  RDSDBName:
+    Default: dev
+    Description: "RDS DB name"
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
+  RDSEngine:
+    Default: postgres
+    Description: RDS db engine e.g. postgres, mysql, mariadb, sqlserver
+    Type: String
+    AllowedValues:
+      - mysql
+      - postgres
+      - oracle-se
   RDSDBUsername:
     Description: Username for RDS database access
     Type: String
@@ -50,6 +66,8 @@ Resources:
       TemplateURL: >-
         https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/rds-resource.yaml
       Parameters:
+          DBName: !Ref RDSDBName
+          DBEngine: !Ref RDSEngine
           DBUsername: !Ref RDSDBUsername
           DBPassword: !Ref RDSDBPassword
           Subnet1:
@@ -109,3 +127,29 @@ Resources:
         https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/vpc.yaml
       Parameters:
            NatGateway: !Ref CreateNatGateway
+  NestedBatchStack:
+      Type: 'AWS::CloudFormation::Stack'
+      DeletionPolicy: Retain
+      Properties:
+          TemplateURL: >-
+              https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/batch-job.yaml
+          Parameters:
+              DBName: !Sub "${RDSEngine}${RDSDBName}"
+              DBUser: !Ref RDSDBUsername
+              DBPassword: !Ref RDSDBPassword
+              Host:
+                  Fn::GetAtt:
+                      - NestedRDSStack
+                      - Outputs.EndpointAddress
+              Port:
+                  Fn::GetAtt:
+                      - NestedRDSStack
+                      - Outputs.Port
+              Subnet:
+                  Fn::GetAtt:
+                      - NestedVPCStack
+                      - Outputs.PublicSubnet2
+              SecurityGroup:
+                  Fn::GetAtt:
+                      - NestedEC2Stack
+                      - Outputs.EC2SecurityGroup

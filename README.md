@@ -74,10 +74,12 @@ When running the command below, replace <username> and <password> with the requi
 respectively. <ip> should be the client ip you wish to grant access to the db (must be of the format 191.255.255.255/24). Note the trailing
 slash .Can be checked by launching EC2 instance from console - Network Settings -> tick the 'Allow SSH traffic from' box and select 'My IP'
 from the dropdown which should show your IP address in the required format.
-
+The path to repo root should be set e.g. '/e/Documents/AWS-VPC'. The script uses this to fetch the path to cf template files in repo.
+The last two params determine if nat gateway and elastic ip are created or not. By default, this is set to true so to avoid
+creating these - then set these to false (as in command below)
 
 ```
-$ sh aws_vpc/create_stacks.sh <username> <password> <ip>
+$ sh aws_vpc/create_stacks.sh <username> <password> <ip> <path-to-gh-repo-root> false false
 
 Uploading templates to s3:
 upload: templates/create_stacks.sh to s3://cf-templates-wnxns0c4jjl4-us-east-1/create_stacks.sh

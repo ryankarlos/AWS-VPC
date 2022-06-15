@@ -1,0 +1,224 @@
+Description: "Creates a batchjob for updating RDS db when S3 data is updated"
+Parameters:
+  InstanceType:
+    Default: c6g.medium
+    Type: String
+    Description: Enter instance size.
+  Subnet:
+    Description: "VPC Public Subnet for ec2 subnet group"
+    Type: "String"
+  SecurityGroup:
+    Description: "Security Group ID for Instance"
+    Type: "String"
+  AMI:
+    Default: ami-0022f774911c1d690
+    Type: String
+    Description: "The AMI to use. Default is AWS Linux AMI"
+  Bucket:
+    Default: s3-eventbridge-batch
+    Type: String
+    Description: "bucket where data is stored for RDS update"
+  ObjectKey:
+    Default: sample-data.txt
+    Type: String
+    Description: "data object key"
+  DBName:
+    Description: RDS DB Name
+    Type: String
+  DBUser:
+    Description: Username for RDS database access
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  DBPassword:
+    Description: RDS Password database access
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters.
+  Host:
+    Description: RDS endpoint address
+    Type: String
+  Port:
+    Description: DB Port
+    Type: Number
+Resources:
+    BatchServiceRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName:
+                Fn::Join:
+                    - ''
+                    -   - !Ref 'AWS::StackName'
+                        - '-batchservice-role'
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    -   Effect: Allow
+                        Principal:
+                            Service: batch.amazonaws.com
+                        Action: sts:AssumeRole
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
+    EcsInstanceRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: '2008-10-17'
+                Statement:
+                    -   Sid: ''
+                        Effect: Allow
+                        Principal:
+                            Service: ec2.amazonaws.com
+                        Action: sts:AssumeRole
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+                - arn:aws:iam::aws:policy/SecretsManagerReadWrite
+    IamInstanceProfile:
+        Type: AWS::IAM::InstanceProfile
+        Properties:
+            Roles:
+                -   Ref: EcsInstanceRole
+    # AWS Batch Job Definition
+    BatchProcessingJobDefinition:
+        Type: AWS::Batch::JobDefinition
+        Properties:
+          Type: container
+          JobDefinitionName:
+            Fn::Join:
+            - ''
+            - - !Ref 'AWS::StackName'
+              - '-update-RDS-data-from-S3'
+          Parameters:
+              host: !Ref Host
+              port: !Ref Port
+              user: !Ref DBUser
+              password: !Ref DBPassword
+              dbname: !Ref DBName
+          ContainerProperties:
+              Image: "public.ecr.aws/amazonlinux/amazonlinux:latest"
+              Environment:
+                 - Name: "BATCH_FILE_S3_URL"
+                   Value: !Sub "s3://${Bucket}/update-rds-db.sh"
+                 - Name: "BATCH_FILE_TYPE"
+                   Value: "script"
+              Command: ["update-rds-db.sh", "Ref::host", "Ref::port", "Ref::user", "Ref::password", "Ref::dbname"]
+              Vcpus: 2
+              Memory: 2000
+          RetryStrategy:
+            Attempts: 1
+
+      # AWS Batch Job Queue
+    BatchProcessingJobQueue:
+        Type: AWS::Batch::JobQueue
+        Properties:
+          JobQueueName:
+            Fn::Join:
+            - ''
+            - - !Ref 'AWS::StackName'
+              - '-update-RDS-data-from-S3'
+          Priority: 1
+          ComputeEnvironmentOrder:
+          - Order: 1
+            ComputeEnvironment:
+              Ref: ComputeEnvironment
+
+      # AWS Batch Compute Environment
+    ComputeEnvironment:
+        Type: AWS::Batch::ComputeEnvironment
+        Properties:
+          Type: MANAGED
+          ComputeResources:
+            Type: EC2
+            MinvCpus: 0
+            DesiredvCpus: 0
+            MaxvCpus: 4
+            InstanceTypes:
+            - Ref: InstanceType
+            ImageId: !Ref AMI
+            Subnets:
+            - Ref: Subnet
+            SecurityGroupIds:
+            - Ref: SecurityGroup
+            InstanceRole:
+              Ref: IamInstanceProfile
+          ServiceRole:
+            Ref: BatchServiceRole
+     # Cloud Watch Rule to trigger AWS Batch jobs based on S3 put object events
+    EventBridgeRule:
+      Type: 'AWS::Events::Rule'
+      Properties:
+        Description: EventBridge Source S3 Target Batch Job
+        Name: S3-Source-RDS-Target
+        EventPattern:
+          source:
+            - aws.s3
+          detail-type:
+            - 'AWS API Call via CloudTrail'
+          detail:
+              eventSource:
+                  - s3.amazonaws.com
+              eventName:
+                  - PutObject
+              requestParameters:
+                  bucketName:
+                      - !Ref Bucket
+                  key:
+                      - !Ref ObjectKey
+        State: ENABLED
+        Targets:
+          - Arn: !Ref BatchProcessingJobQueue
+            RoleArn: !GetAtt EventBridgeTargetRole.Arn
+            Id: batch-job-RDS-update
+            BatchParameters:
+                JobDefinition: !Ref BatchProcessingJobDefinition
+                JobName: BatchDBJobExecutedByCloudWatchRule
+                RetryStrategy:
+                    Attempts: 1
+    EventBridgeTargetRole:
+        Type: 'AWS::IAM::Role'
+        Properties:
+          AssumeRolePolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Principal:
+                  Service:
+                    - events.amazonaws.com
+                Action:
+                  - 'sts:AssumeRole'
+          Path: /
+          Policies:
+            - PolicyName: EventBridge-Batch
+              PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  - Effect: Allow
+                    Action:
+                      - "batch:SubmitJob"
+                    Resource: '*'
+Outputs:
+  ComputeEnvironmentArn:
+    Value:
+      Ref: ComputeEnvironment
+  BatchProcessingJobQueueArn:
+    Value:
+      Ref: BatchProcessingJobQueue
+  BatchProcessingJobDefinitionArn:
+    Value:
+      Ref: BatchProcessingJobDefinition
+  BatchServiceRoleArn:
+    Value: !GetAtt BatchServiceRole.Arn
+    Export:
+        Name: !Sub "${AWS::StackName}-ServiceRole"
+  ECSInstanceRoleArn:
+    Value:
+      Ref: EcsInstanceRole
+    Export:
+        Name: !Sub "${AWS::StackName}-ECSInstanceRole"
+  ECSInstanceProfileArn:
+    Value:
+      Ref: IamInstanceProfile
+    Export:
+        Name: !Sub "${AWS::StackName}-InstanceProfile"

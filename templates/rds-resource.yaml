@@ -35,7 +35,6 @@ Parameters:
     AllowedPattern: '[a-zA-Z0-9]*'
     ConstraintDescription: must contain only alphanumeric characters.
   DBName:
-    Default: dev
     Description: "RDS DB name"
     Type: String
     MinLength: '1'
@@ -43,7 +42,6 @@ Parameters:
     AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
     ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
   DBEngine:
-    Default: postgres
     Description: RDS db engine e.g. postgres, mysql, mariadb, sqlserver
     Type: String
     AllowedValues:
@@ -171,3 +169,11 @@ Resources:
           Tags:
               -   Key: Name
                   Value: RDS-non-default
+Outputs:
+  EndpointAddress:
+    Description: Endpoint Address for RDS Instance
+    Value: !If [CreatePostgres, !GetAtt DefaultInstance.Endpoint.Address, !If [CreateOracle, !GetAtt RDSOracleInstance.Endpoint.Address, !GetAtt  RDSMySQLInstance.Endpoint.Address]]
+  Port:
+    Description: DBName attribute of DB Instance
+    Value: !If [CreatePostgres, !GetAtt DefaultInstance.Endpoint.Port, !If [CreateOracle, !GetAtt RDSOracleInstance.Endpoint.Port, !GetAtt  RDSMySQLInstance.Endpoint.Port]]
+
