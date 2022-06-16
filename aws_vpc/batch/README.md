@@ -37,8 +37,7 @@ The push refers to repository [<ACCT_ID>.dkr.ecr.us-east-1.amazonaws.com/awsbatc
 8aac9b525d16: Pushed
 2ce46c79ab58: Pushed
 latest: digest: sha256:a75c7f445bab278b9cf42146bd8e1af33c7aa792d57337a4d9f4d91f29db4ccc size: 1575
-```
+
+````
 
 #### Upload data to S3 and trigger Batch Job
-
-
