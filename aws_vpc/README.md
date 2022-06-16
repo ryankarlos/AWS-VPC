@@ -41,7 +41,7 @@ web browser by configuring security rules
 
 ### Deploying to EC2 instance in VPC with RDS DB in same VPC
 
-<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/db-webserver-same-vpc.png></img>
+<img height=500 src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/db-webserver-same-vpc.png></img>
 
 
 ### Deploying to EC2 instance in VPC with Redshift Cluster in different VPC
