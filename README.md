@@ -59,6 +59,8 @@ Root stack `nested-stack.yaml` uses the AWS::CloudFormation::Stack resource to r
 with a `DeletionPolicy::Retain`. The nested AWS::CloudFormation::Stack definition in the parent stack template matches the actual nested stack's template
 which needs to be uploaded to S3 and https url referenced in the `TemplateURL` property.
 
+<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/cloudformation_nested_stack_architecture.png"></img>
+
 To validate cloud formation template(s) run the following command as below (replacing the template path with the path to your template) which should return a ValidationError if the template is malformed or contains incorrect keys, syntax errors or references to logical ids etc
 
 ```
