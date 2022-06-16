@@ -12,8 +12,10 @@ https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/, this will create a depe
 security groups which means that we would need to delete this inbound rule before terminating EB application
 and all the resources. AWSHowTo.RDS.html
 The next few sections, will follow the tutorial in AWS docs https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html
-with some modifications to create an EB application and deployment with all the required
-resources.
+with some modifications where we will also have a Redshift cluster in same VPC, and configure security group inbound rules to allow the EC2 instances in the EB environment to communciate with Redshift cluster and vice versa.
+
+<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/elastic_beanstalk_deploy_flask.png"></img>
+
 
 #### Installing and configuring Elastic Beanstalk cli
 
