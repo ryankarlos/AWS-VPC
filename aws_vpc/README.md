@@ -1,4 +1,4 @@
-### Web server and an Amazon RDS DB instance in same VPC
+### Deploying Flask App to EC2 
 
 In this example we will create a web server running on an Amazon EC2 instance and create a MySQL database instance.
 Both the Amazon EC2 instance and the DB instance run in a virtual private cloud (VPC) based on the Amazon VPC service.
@@ -39,5 +39,11 @@ http://127.0.0.1:5000 as in logs below
 Now we will deploy and run this application on AWS EC2 instance inside a VPC and access it from our
 web browser by configuring security rules
 
-### Creating AWS resources and deploying to AWS E2 instance
+### Deploying to EC2 instance in VPC with RDS DB in same VPC
 
+<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/db-webserver-same-vpc.png></img>
+
+
+### Deploying to EC2 instance in VPC with Redshift Cluster in different VPC
+
+<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/db-webserver-different-vpcs.png></img>
