@@ -133,24 +133,23 @@ If there is an error, then check the reason in the 'events' tab of the child sta
 
 <img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/Nested-Stack-console.png></img>
 
-
 Navigating to the VPC dashboard in AWS - we can see the public and private subnets associated with the VPCS
 
-<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/vpc_subnets.png></img>
+<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/vpc_subnets.png"></img>
 
 Each of these subnets has a route table which contain a set of routes to define where network traffic from subnet
 or gateway is directed. For the private subnet, traffic from the subnet to the public internet (`0.0.0.0/0`) is directed
-via the NAT gateway (`nat-0e597127d85323ae7`).
+via the NAT gateway (`nat-0556f55bf98f77b90`).
 We have also configured a VPC endpoint `vpce-0c67618e7d07b7d22` to access S3 (`pl-63a5400a` is prefix id for
 S3), which can be seen in the route table
 
-<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/private_subnet.png></img>
+<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/private_subnet_rt_example.png"></img>
 
 For the public subnet, we have a route from the subnet to the Internet gateway (`igw-004cbef6dac3f9770`) to the
 public internet.  As with the private sunet, we have also configured the public subet to access S3 via the same
 VPC endpoint (`vpce-0c67618e7d07b7d22`).
 
-<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/public_subnet_rt.png></img>
+<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/public_subnet_rt_example.png"></img>
 
 The security groups `EC2 non default` and `RDS non default` for the VPC created, with inbound and outbound rules
 
