@@ -1,4 +1,4 @@
-Description: "This template creates a nested stack with redshift resource in a vpc and rds resource in another vpc"
+Description: "This template creates a nested stack with redshift resource in a vpc, rds/ec2 resources in another vpc and a batch job definition/queue"
 Parameters:
   RDSDBName:
     Default: dev
@@ -50,10 +50,6 @@ Parameters:
       Default: 't2.micro'
       Description: EC2 Instance type to use. Default is t2.micro
       Type: String
-  CreateNatGateway:
-    Description: Whether to create NATGateway for private subnet or not
-    Type: String
-    Default: false
   CreateElasticIP:
     Description: Whether to associate elastic ip for EC2
     Type: String
@@ -70,18 +66,9 @@ Resources:
           DBEngine: !Ref RDSEngine
           DBUsername: !Ref RDSDBUsername
           DBPassword: !Ref RDSDBPassword
-          Subnet1:
-               Fn::GetAtt:
-                    - NestedVPCStack
-                    - Outputs.PrivateSubnet1
-          Subnet2:
-                Fn::GetAtt:
-                    - NestedVPCStack
-                    - Outputs.PrivateSubnet2
-          VPC:
-                Fn::GetAtt:
-                    - NestedVPCStack
-                    - Outputs.VPC
+          Subnet1: !ImportValue vpc-non-default-private-subnet-1
+          Subnet2: !ImportValue vpc-non-default-private-subnet-2
+          VPC: !ImportValue vpc-non-default-id
           ClientIP: !Ref UserIP
           EC2Security:
                 Fn::GetAtt:
@@ -108,25 +95,11 @@ Resources:
       TemplateURL: >-
         https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/ec2.yaml
       Parameters:
-          Subnet:
-              Fn::GetAtt:
-                  - NestedVPCStack
-                  - Outputs.PublicSubnet1
-          VPC:
-              Fn::GetAtt:
-                  - NestedVPCStack
-                  - Outputs.VPC
+          Subnet: !ImportValue vpc-non-default-pubic-subnet-1
+          VPC: !ImportValue vpc-non-default-id
           ClientIP: !Ref UserIP
           InstanceTypeParameter: !Ref InstanceType
           Elasticip: !Ref CreateElasticIP
-  NestedVPCStack:
-    Type: 'AWS::CloudFormation::Stack'
-    DeletionPolicy: Retain
-    Properties:
-      TemplateURL: >-
-        https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/vpc.yaml
-      Parameters:
-           NatGateway: !Ref CreateNatGateway
   NestedBatchStack:
       Type: 'AWS::CloudFormation::Stack'
       DeletionPolicy: Retain
@@ -145,10 +118,7 @@ Resources:
                   Fn::GetAtt:
                       - NestedRDSStack
                       - Outputs.Port
-              Subnet:
-                  Fn::GetAtt:
-                      - NestedVPCStack
-                      - Outputs.PublicSubnet2
+              Subnet: !ImportValue vpc-non-default-pubic-subnet-2
               SecurityGroup:
                   Fn::GetAtt:
                       - NestedEC2Stack

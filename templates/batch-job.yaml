@@ -1,27 +1,11 @@
 Description: "Creates a batchjob for updating RDS db when S3 data is updated"
 Parameters:
-  InstanceType:
-    Default: c6g.medium
-    Type: String
-    Description: Enter instance size.
   Subnet:
     Description: "VPC Public Subnet for ec2 subnet group"
     Type: "String"
   SecurityGroup:
     Description: "Security Group ID for Instance"
     Type: "String"
-  AMI:
-    Default: ami-0022f774911c1d690
-    Type: String
-    Description: "The AMI to use. Default is AWS Linux AMI"
-  Bucket:
-    Default: s3-eventbridge-batch
-    Type: String
-    Description: "bucket where data is stored for RDS update"
-  ObjectKey:
-    Default: sample-data.txt
-    Type: String
-    Description: "data object key"
   DBName:
     Description: RDS DB Name
     Type: String
@@ -50,7 +34,7 @@ Resources:
             RoleName:
                 Fn::Join:
                     - ''
-                    -   - !Ref 'AWS::StackName'
+                    -   - 'NestedBatchStack'
                         - '-batchservice-role'
             AssumeRolePolicyDocument:
                 Version: '2012-10-17'
@@ -72,18 +56,67 @@ Resources:
                         Principal:
                             Service: ec2.amazonaws.com
                         Action: sts:AssumeRole
+            Path: /
+            Policies:
+                -   PolicyName: kms-decryption
+                    PolicyDocument:
+                        Version: "2012-10-17"
+                        Statement:
+                            -   Effect: Allow
+                                Action:
+                                   - "kms:*"
+                                   - "ec2:*"
+                                   - "ecs:*"
+                                   - "ecr:*"
+                                   - "logs:*"
+                                Resource: '*'
             ManagedPolicyArns:
-                - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
                 - arn:aws:iam::aws:policy/SecretsManagerReadWrite
+                - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+                - arn:aws:iam::aws:policy/AmazonS3FullAccess
+                - arn:aws:iam::aws:policy/AmazonRDSFullAccess
+                - arn:aws:iam::aws:policy/AmazonRedshiftDataFullAccess
     IamInstanceProfile:
         Type: AWS::IAM::InstanceProfile
         Properties:
             Roles:
                 -   Ref: EcsInstanceRole
+    EcsTaskExecutionRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: '2008-10-17'
+                Statement:
+                    -   Sid: ''
+                        Effect: Allow
+                        Principal:
+                            Service: ecs-tasks.amazonaws.com
+                        Action: sts:AssumeRole
+            Path: /
+            Policies:
+                -   PolicyName: kms-decryption
+                    PolicyDocument:
+                        Version: "2012-10-17"
+                        Statement:
+                            -   Effect: Allow
+                                Action:
+                                    - "kms:*"
+                                    - "ec2:*"
+                                    - "ecs:*"
+                                    - "ecr:*"
+                                    - "logs:*"
+                                Resource: '*'
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/SecretsManagerReadWrite
+                - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+                - arn:aws:iam::aws:policy/AmazonS3FullAccess
+                - arn:aws:iam::aws:policy/AmazonRDSFullAccess
+                - arn:aws:iam::aws:policy/AmazonRedshiftDataFullAccess
     # AWS Batch Job Definition
     BatchProcessingJobDefinition:
         Type: AWS::Batch::JobDefinition
         Properties:
+          PlatformCapabilities: [FARGATE]
           Type: container
           JobDefinitionName:
             Fn::Join:
@@ -97,15 +130,21 @@ Resources:
               password: !Ref DBPassword
               dbname: !Ref DBName
           ContainerProperties:
-              Image: "public.ecr.aws/amazonlinux/amazonlinux:latest"
-              Environment:
-                 - Name: "BATCH_FILE_S3_URL"
-                   Value: !Sub "s3://${Bucket}/update-rds-db.sh"
-                 - Name: "BATCH_FILE_TYPE"
-                   Value: "script"
-              Command: ["update-rds-db.sh", "Ref::host", "Ref::port", "Ref::user", "Ref::password", "Ref::dbname"]
-              Vcpus: 2
-              Memory: 2000
+              Image: !Sub "${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/awsbatch-rds:latest"
+              LogConfiguration:
+                      LogDriver: 'awslogs'
+              Command: ["Ref::host", "Ref::port", "Ref::user", "Ref::password", "Ref::dbname"]
+              Secrets:
+                  - Name: AWS_SECRET_ACCESS_KEY
+                    ValueFrom: SECRET_ACCESS_KEY
+                  - Name: AWS_ACCESS_KEY_ID
+                    ValueFrom: ACCESS_KEY_ID
+              ExecutionRoleArn: !GetAtt EcsTaskExecutionRole.Arn
+              ResourceRequirements:
+                  - Type: VCPU
+                    Value: 2
+                  - Type: MEMORY
+                    Value: 4096
           RetryStrategy:
             Attempts: 1
 
@@ -130,19 +169,12 @@ Resources:
         Properties:
           Type: MANAGED
           ComputeResources:
-            Type: EC2
-            MinvCpus: 0
-            DesiredvCpus: 0
+            Type: FARGATE
             MaxvCpus: 4
-            InstanceTypes:
-            - Ref: InstanceType
-            ImageId: !Ref AMI
             Subnets:
             - Ref: Subnet
             SecurityGroupIds:
             - Ref: SecurityGroup
-            InstanceRole:
-              Ref: IamInstanceProfile
           ServiceRole:
             Ref: BatchServiceRole
      # Cloud Watch Rule to trigger AWS Batch jobs based on S3 put object events
@@ -150,7 +182,7 @@ Resources:
       Type: 'AWS::Events::Rule'
       Properties:
         Description: EventBridge Source S3 Target Batch Job
-        Name: S3-Source-RDS-Target
+        Name: S3-Source-Batch-Target
         EventPattern:
           source:
             - aws.s3
@@ -163,9 +195,9 @@ Resources:
                   - PutObject
               requestParameters:
                   bucketName:
-                      - !Ref Bucket
+                      - s3-eventbridge-batch
                   key:
-                      - !Ref ObjectKey
+                      - sample-data.txt
         State: ENABLED
         Targets:
           - Arn: !Ref BatchProcessingJobQueue
@@ -211,14 +243,14 @@ Outputs:
   BatchServiceRoleArn:
     Value: !GetAtt BatchServiceRole.Arn
     Export:
-        Name: !Sub "${AWS::StackName}-ServiceRole"
+        Name: !Sub "NestedBatchStack-ServiceRole"
   ECSInstanceRoleArn:
     Value:
       Ref: EcsInstanceRole
     Export:
-        Name: !Sub "${AWS::StackName}-ECSInstanceRole"
+        Name: "NestedBatchStack-ECSInstanceRole"
   ECSInstanceProfileArn:
     Value:
       Ref: IamInstanceProfile
     Export:
-        Name: !Sub "${AWS::StackName}-InstanceProfile"
+        Name: !Sub "NestedBatchStack-InstanceProfile"

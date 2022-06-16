@@ -10,4 +10,4 @@ CREATE TABLE IF NOT EXISTS persons (
 
 TRUNCATE TABLE persons;
 
-\COPY persons FROM 's3://s3-eventbridge-batch/sample-data.txt' WITH DELIMITER ',' CSV;
+\COPY persons FROM 'sample-data.txt' WITH DELIMITER ',' CSV;

@@ -1,4 +1,4 @@
-Description: "Creates an ec2 instance in desiered vpc subnet"
+Description: "Creates an ec2 instance in desired vpc subnet"
 Parameters:
   InstanceTypeParameter:
     Type: String
