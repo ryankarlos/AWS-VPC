@@ -51,6 +51,8 @@ Resources:
   RedshiftCluster:
     Type: "AWS::Redshift::Cluster"
     Properties:
+      IamRoles:
+        - !GetAtt RSDefaultIAMRole.Arn
       DBName:
         Ref: "DBName"
       MasterUsername:
@@ -61,7 +63,7 @@ Resources:
         Ref: "NodeType"
       ClusterType: "single-node"
       ClusterIdentifier: "default-cluster"
-      Port: "8192"
+      Port: "5439"
       ClusterParameterGroupName:
         Ref: "RedshiftClusterParameterGroup"
       ClusterSubnetGroupName:
@@ -94,6 +96,10 @@ Resources:
                 -   IpProtocol: tcp
                     FromPort: 5439
                     ToPort: 5439
+                    SourceSecurityGroupId: "sg-0afdf2d5ce4c8ed3e"
+                -   IpProtocol: tcp
+                    FromPort: 5439
+                    ToPort: 5439
                     CidrIp: !Ref ClientIP
             SecurityGroupEgress:
                 -   CidrIp: "0.0.0.0/0"
@@ -101,3 +107,30 @@ Resources:
             Tags:
                 -   Key: Name
                     Value: Redshift
+  RSDefaultIAMRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: '2008-10-17'
+                Statement:
+                    -   Sid: ''
+                        Effect: Allow
+                        Principal:
+                            Service: redshift.amazonaws.com
+                        Action: sts:AssumeRole
+            RoleName: DefaultRedshiftRole
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/AmazonS3FullAccess
+                - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+                - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+                - arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess
+                - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
+                - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+Outputs:
+  EndpointAddress:
+    Description: Endpoint Address for Redshift Cluster
+    Value: !GetAtt RedshiftCluster.Endpoint.Address
+  Port:
+    Description: DBName attribute of Redshift DB
+    Value: !GetAtt RedshiftCluster.Endpoint.Port
+

@@ -6,26 +6,47 @@ Parameters:
   SecurityGroup:
     Description: "Security Group ID for Instance"
     Type: "String"
-  DBName:
+  RDSDBName:
     Description: RDS DB Name
     Type: String
-  DBUser:
+  RDSUser:
     Description: Username for RDS database access
     Type: String
     MinLength: '1'
     MaxLength: '16'
     AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
     ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
-  DBPassword:
+  RDSPassword:
     Description: RDS Password database access
     Type: String
     AllowedPattern: '[a-zA-Z0-9]*'
     ConstraintDescription: must contain only alphanumeric characters.
-  Host:
+  RDSHost:
     Description: RDS endpoint address
     Type: String
-  Port:
+  RDSPort:
     Description: DB Port
+    Type: Number
+  RedshiftDBName:
+    Description: Redshift DB Name
+    Type: String
+  RedshiftUser:
+    Description: Username for Redshift cluster access
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  RedshiftPassword:
+    Description: Redshift Password database access
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters.
+  RedshiftHost:
+    Description: Redshift endpoint address
+    Type: String
+  RedshiftPort:
+    Description: Redshift Port
     Type: Number
 Resources:
     BatchServiceRole:
@@ -124,21 +145,23 @@ Resources:
             - - !Ref 'AWS::StackName'
               - '-update-RDS-data-from-S3'
           Parameters:
-              host: !Ref Host
-              port: !Ref Port
-              user: !Ref DBUser
-              password: !Ref DBPassword
-              dbname: !Ref DBName
+              rdshost: !Ref RDSHost
+              rdsport: !Ref RDSPort
+              rdsuser: !Ref RDSUser
+              rdspassword: !Ref RDSPassword
+              rdsdbname: !Ref RDSDBName
+              redshifthost: !Ref RedshiftHost
+              redshiftport: !Ref RedshiftPort
+              redshiftuser: !Ref RedshiftUser
+              redshiftpassword: !Ref RedshiftPassword
+              redshiftdbname: !Ref RedshiftDBName
           ContainerProperties:
               Image: !Sub "${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/awsbatch-rds:latest"
               LogConfiguration:
                       LogDriver: 'awslogs'
-              Command: ["Ref::host", "Ref::port", "Ref::user", "Ref::password", "Ref::dbname"]
-              Secrets:
-                  - Name: AWS_SECRET_ACCESS_KEY
-                    ValueFrom: SECRET_ACCESS_KEY
-                  - Name: AWS_ACCESS_KEY_ID
-                    ValueFrom: ACCESS_KEY_ID
+              Command: ["Ref::rdshost", "Ref::rdsport", "Ref::rdsuser", "Ref::rdspassword",
+                        "Ref::rdsdbname", "Ref::redshifthost", "Ref::redshiftport", "Ref::redshiftuser",
+                        "Ref::redshiftpassword", "Ref::redshiftdbname"]
               ExecutionRoleArn: !GetAtt EcsTaskExecutionRole.Arn
               ResourceRequirements:
                   - Type: VCPU

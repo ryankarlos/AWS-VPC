@@ -44,12 +44,14 @@ Resources:
             Ref: InstanceTypeParameter
         SecurityGroupIds:
             -   Ref: EC2SecurityGroup
+        IamInstanceProfile: !Ref  EC2InstanceProfile
     ElasticIP:
         Type: AWS::EC2::EIP
         Condition: CreateElasticIP
         Properties:
             Domain: vpc
             InstanceId: !Ref EC2Instance
+
     EC2SecurityGroup:
         Type: AWS::EC2::SecurityGroup
         Properties:
@@ -78,6 +80,41 @@ Resources:
             Tags:
                 -   Key: Name
                     Value: EC2-non-default
+    EC2InstanceRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: '2008-10-17'
+                Statement:
+                    -   Sid: ''
+                        Effect: Allow
+                        Principal:
+                            Service: ec2.amazonaws.com
+                        Action: sts:AssumeRole
+            Path: /
+            Policies:
+                -   PolicyName: kms-decryption
+                    PolicyDocument:
+                        Version: "2012-10-17"
+                        Statement:
+                            -   Effect: Allow
+                                Action:
+                                   - "kms:*"
+                                   - "logs:*"
+                                Resource: '*'
+            RoleName: EC2Role-RDS-Redshift-S3-SSMSecrets
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/SecretsManagerReadWrite
+                - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+                - arn:aws:iam::aws:policy/AmazonS3FullAccess
+                - arn:aws:iam::aws:policy/AmazonRDSFullAccess
+                - arn:aws:iam::aws:policy/AmazonRedshiftDataFullAccess
+    EC2InstanceProfile:
+        Type: AWS::IAM::InstanceProfile
+        Properties:
+            InstanceProfileName: EC2Profile-RDS-Redshift-S3-SSMSecrets
+            Roles:
+                -   Ref: EC2InstanceRole
 Outputs:
   EC2SecurityGroup:
     Description: A reference to the EC2 security group

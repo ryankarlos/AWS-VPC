@@ -1,8 +1,8 @@
 Description: "This template creates a nested stack with redshift resource in a vpc, rds/ec2 resources in another vpc and a batch job definition/queue"
 Parameters:
-  RDSDBName:
+  DBName:
     Default: dev
-    Description: "RDS DB name"
+    Description: "DB name for redshift and/or rds "
     Type: String
     MinLength: '1'
     MaxLength: '64'
@@ -28,10 +28,10 @@ Parameters:
     Type: String
     AllowedPattern: '[a-zA-Z0-9]*'
     ConstraintDescription: must contain only alphanumeric characters.
-  RedshiftUsername:
+  RSUsername:
     Description: Redshift Username database access
     Type: String
-  RedshiftPassword:
+  RSPassword:
     Description: Redshift Password database access
     Type: String
   RDSDBAllocatedStorage:
@@ -62,7 +62,7 @@ Resources:
       TemplateURL: >-
         https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/rds-resource.yaml
       Parameters:
-          DBName: !Ref RDSDBName
+          DBName: !Ref DBName
           DBEngine: !Ref RDSEngine
           DBUsername: !Ref RDSDBUsername
           DBPassword: !Ref RDSDBPassword
@@ -81,8 +81,8 @@ Resources:
       TemplateURL: >-
         https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/redshift.yaml
       Parameters:
-          Username: !Ref RedshiftUsername
-          Password: !Ref RedshiftPassword
+          Username: !Ref RSUsername
+          Password: !Ref RSPassword
           ClientIP: !Ref UserIP
           EC2Security:
               Fn::GetAtt:
@@ -107,16 +107,27 @@ Resources:
           TemplateURL: >-
               https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/batch-job.yaml
           Parameters:
-              DBName: !Sub "${RDSEngine}${RDSDBName}"
-              DBUser: !Ref RDSDBUsername
-              DBPassword: !Ref RDSDBPassword
-              Host:
+              RDSDBName: !Sub "${RDSEngine}${DBName}"
+              RDSUser: !Ref RDSDBUsername
+              RDSPassword: !Ref RDSDBPassword
+              RDSHost:
                   Fn::GetAtt:
                       - NestedRDSStack
                       - Outputs.EndpointAddress
-              Port:
+              RDSPort:
                   Fn::GetAtt:
                       - NestedRDSStack
+                      - Outputs.Port
+              RedshiftDBName: !Ref DBName
+              RedshiftUser: !Ref RSUsername
+              RedshiftPassword: !Ref RSPassword
+              RedshiftHost:
+                  Fn::GetAtt:
+                      - NestedRedshiftStack
+                      - Outputs.EndpointAddress
+              RedshiftPort:
+                  Fn::GetAtt:
+                      - NestedRedshiftStack
                       - Outputs.Port
               Subnet: !ImportValue vpc-non-default-pubic-subnet-2
               SecurityGroup:
