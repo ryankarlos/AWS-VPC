@@ -5,29 +5,14 @@ import sys
 import boto3
 import psycopg2
 from botocore.exceptions import ClientError
-from constants import query, REGION, SECRET_NAME
+from constants import REGION, REDSHIFT_SECRET_NAME, RDS_SECRET_NAME
 
 
-def get_secret():
-    ssm = boto3.client("ssm", region_name="us-east-1")
-    access_key_id = ssm.get_parameter(Name="ACCESS_KEY_ID", WithDecryption=True)[
-        "Parameter"
-    ]["Value"]
-    secret_access_key = ssm.get_parameter(
-        Name="SECRET_ACCESS_KEY", WithDecryption=True
-    )["Parameter"]["Value"]
-
-    session = boto3.Session(
-        aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key
-    )
-
-    client = session.client(
-        service_name="secretsmanager",
-        region_name=REGION,
-    )
+def get_secret(secret_name):
+    client = boto3.client('secretsmanager', region_name=REGION)
 
     try:
-        get_secret_value_response = client.get_secret_value(SecretId=SECRET_NAME)
+        get_secret_value_response = client.get_secret_value(SecretId=secret_name)
     except ClientError as e:
         if e.response["Error"]["Code"] == "ResourceNotFoundException":
             print("The requested secret " + SECRET_NAME + " was not found")
@@ -45,26 +30,34 @@ def get_secret():
         # Secrets Manager decrypts the secret value using the associated KMS CMK
         # Depending on whether the secret was a string or binary, only one of these fields will be populated
         if "SecretString" in get_secret_value_response:
-            text_secret_data = get_secret_value_response["SecretString"]
-            return text_secret_data
+            secret_data = get_secret_value_response["SecretString"]
+
         else:
-            binary_secret_data = get_secret_value_response["SecretBinary"]
-            return binary_secret_data
+            secret_data = get_secret_value_response["SecretBinary"]
+        secret_dict = json.loads(secret_data)
+        endpoint = secret_dict["host"]
+        port = secret_dict["port"]
+        dbname = secret_dict["dbname"]
+        user = secret_dict["username"]
+        password = secret_dict["password"]
+        return {
+            "host": endpoint,
+            "port": port,
+            "dbname": dbname,
+            "user": user,
+            "password": password,
+        }
 
 
-def query_rds(query):
-    secret_data = get_secret()
-    secret_dict = json.loads(secret_data)
-    password = secret_dict["password"]
-    user = secret_dict["username"]
-    dbname = secret_dict["dbname"]
-    endpoint = secret_dict["host"]
-    port = secret_dict["port"]
-    dbi = secret_dict["dbInstanceIdentifier"]
+def query_db(query, service):
+    if service == "rds":
+        secrets_dict = get_secret(RDS_SECRET_NAME)
+    elif service == "redshift":
+        secrets_dict = get_secret(REDSHIFT_SECRET_NAME)
+    else:
+        raise ValueError("service argument must be either 'rds' or 'redshift'")
     try:
-        conn = psycopg2.connect(
-            host=endpoint, port=port, database=dbname, user=user, password=password
-        )
+        conn = psycopg2.connect(**secrets_dict)
         with conn.cursor() as cur:
             for q in query:
                 cur.execute(q)
@@ -79,17 +72,21 @@ def query_rds(query):
                         "address": query_result[4],
                     }
         results = {
-            "db_name": dbname,
-            "db_identifier": dbi,
+            "db_name": secrets_dict["dbname"],
             "total_rows": count_result,
             "person_detail": person_result,
         }
         # uncomment for debugging
-        # print(json.dumps(results, indent=4))
+        print(json.dumps(results, indent=4, default=str))
         return results
     except Exception as e:
         print("Database connection failed due to {}".format(e))
 
 
 if __name__ == "__main__":
-    query_rds(query)
+    email = "fake_julie74@example.com"
+    query = [
+        """SELECT COUNT(*) FROM persons""",
+        """SELECT * FROM persons WHERE email LIKE '{}%'""".format(email),
+    ]
+    query_db(query=query, service="redshift")

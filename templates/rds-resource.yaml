@@ -29,11 +29,13 @@ Parameters:
     MaxLength: '16'
     AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
     ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+    NoEcho: true
   DBPassword:
     Description: RDS Password database access
     Type: String
     AllowedPattern: '[a-zA-Z0-9]*'
     ConstraintDescription: must contain only alphanumeric characters.
+    NoEcho: true
   DBName:
     Description: "RDS DB name"
     Type: String

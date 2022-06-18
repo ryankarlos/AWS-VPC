@@ -4,11 +4,15 @@ set -e
 
 export AWS_DEFAULT_REGION=us-east-1
 
-export PGHOST=$1
-export PGPORT=$2
-export PGUSER=$3
-export PGPASSWORD=$4
-export PGDATABASE=$5
+
+RDS_SECRETS=$(aws secretsmanager get-secret-value --secret-id RDS-credentials --query SecretString --output text)
+
+
+export PGHOST=$(echo $RDS_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["host"])')
+export PGPORT=$(echo $RDS_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["port"])')
+export PGUSER=$(echo $RDS_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["username"])')
+export PGPASSWORD=$(echo $RDS_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["password"])')
+export PGDATABASE=$(echo $RDS_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["dbname"])')
 
 
 echo "Copying data from S3 into EC2 for upload to RDS/Redshift"
@@ -19,11 +23,15 @@ echo "Connecting to RDS DB ${PGDATABASE} on port ${PGPORT}"
 psql -f 'rds-db-update.sql'
 
 
-export PGHOST=$6
-export PGPORT=$7
-export PGUSER=$8
-export PGPASSWORD=$9
-export PGDATABASE=${10}
+REDSHIFT_SECRETS=$(aws secretsmanager get-secret-value --secret-id Redshift-credentials --query SecretString --output text)
+
+
+export PGHOST=$(echo $REDSHIFT_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["host"])')
+export PGPORT=$(echo $REDSHIFT_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["port"])')
+export PGUSER=$(echo $REDSHIFT_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["username"])')
+export PGPASSWORD=$(echo $REDSHIFT_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["password"])')
+export PGDATABASE=$(echo $REDSHIFT_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["dbname"])')
+
 
 
 echo "Connecting to Redshift cluster db ${PGDATABASE} on port ${PGPORT}"

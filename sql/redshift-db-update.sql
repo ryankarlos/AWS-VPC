@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS persons (
 
 TRUNCATE TABLE persons;
 
+SELECT COUNT(*) FROM persons;
+
+
 \echo 'copying data into redshift table'
 
 COPY persons from 's3://s3-eventbridge-batch/sample-data.txt' iam_role default region 'us-east-1' delimiter ',' ;

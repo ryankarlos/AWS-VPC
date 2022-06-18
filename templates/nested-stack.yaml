@@ -23,17 +23,21 @@ Parameters:
     MaxLength: '16'
     AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
     ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+    NoEcho: true
   RDSDBPassword:
     Description: RDS Password database access
     Type: String
     AllowedPattern: '[a-zA-Z0-9]*'
     ConstraintDescription: must contain only alphanumeric characters.
+    NoEcho: true
   RSUsername:
     Description: Redshift Username database access
     Type: String
+    NoEcho: true
   RSPassword:
     Description: Redshift Password database access
     Type: String
+    NoEcho: true
   RDSDBAllocatedStorage:
     Default: '20'
     Description: The size of the RDS database (GiB)
@@ -107,28 +111,6 @@ Resources:
           TemplateURL: >-
               https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/batch-job.yaml
           Parameters:
-              RDSDBName: !Sub "${RDSEngine}${DBName}"
-              RDSUser: !Ref RDSDBUsername
-              RDSPassword: !Ref RDSDBPassword
-              RDSHost:
-                  Fn::GetAtt:
-                      - NestedRDSStack
-                      - Outputs.EndpointAddress
-              RDSPort:
-                  Fn::GetAtt:
-                      - NestedRDSStack
-                      - Outputs.Port
-              RedshiftDBName: !Ref DBName
-              RedshiftUser: !Ref RSUsername
-              RedshiftPassword: !Ref RSPassword
-              RedshiftHost:
-                  Fn::GetAtt:
-                      - NestedRedshiftStack
-                      - Outputs.EndpointAddress
-              RedshiftPort:
-                  Fn::GetAtt:
-                      - NestedRedshiftStack
-                      - Outputs.Port
               Subnet: !ImportValue vpc-non-default-pubic-subnet-2
               SecurityGroup:
                   Fn::GetAtt:

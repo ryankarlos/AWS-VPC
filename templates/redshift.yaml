@@ -3,9 +3,11 @@ Parameters:
   Username:
     Description: "Redshift Master username"
     Type: "String"
+    NoEcho: true
   Password:
     Description: "Redshift Master password"
     Type: "String"
+    NoEcho: true
   Subnet1:
     Default: subnet-0559a76c20973f935
     Description: "Default VPC Public Subnet 1 ind for redshift subnet group"
@@ -70,6 +72,7 @@ Resources:
         Ref: "RedshiftSubnetGroup"
       EnhancedVpcRouting:
           Ref: "EnhancedRouting"
+      PubliclyAccessible: false
       VpcSecurityGroupIds: [!Ref RSDefaultSecurity]
   RedshiftClusterParameterGroup:
       Properties:

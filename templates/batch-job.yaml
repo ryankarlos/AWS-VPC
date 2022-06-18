@@ -6,48 +6,6 @@ Parameters:
   SecurityGroup:
     Description: "Security Group ID for Instance"
     Type: "String"
-  RDSDBName:
-    Description: RDS DB Name
-    Type: String
-  RDSUser:
-    Description: Username for RDS database access
-    Type: String
-    MinLength: '1'
-    MaxLength: '16'
-    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
-    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
-  RDSPassword:
-    Description: RDS Password database access
-    Type: String
-    AllowedPattern: '[a-zA-Z0-9]*'
-    ConstraintDescription: must contain only alphanumeric characters.
-  RDSHost:
-    Description: RDS endpoint address
-    Type: String
-  RDSPort:
-    Description: DB Port
-    Type: Number
-  RedshiftDBName:
-    Description: Redshift DB Name
-    Type: String
-  RedshiftUser:
-    Description: Username for Redshift cluster access
-    Type: String
-    MinLength: '1'
-    MaxLength: '16'
-    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
-    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
-  RedshiftPassword:
-    Description: Redshift Password database access
-    Type: String
-    AllowedPattern: '[a-zA-Z0-9]*'
-    ConstraintDescription: must contain only alphanumeric characters.
-  RedshiftHost:
-    Description: Redshift endpoint address
-    Type: String
-  RedshiftPort:
-    Description: Redshift Port
-    Type: Number
 Resources:
     BatchServiceRole:
         Type: AWS::IAM::Role
@@ -69,6 +27,7 @@ Resources:
     EcsInstanceRole:
         Type: AWS::IAM::Role
         Properties:
+            RoleName: ECSInstanceRole
             AssumeRolePolicyDocument:
                 Version: '2008-10-17'
                 Statement:
@@ -102,9 +61,11 @@ Resources:
         Properties:
             Roles:
                 -   Ref: EcsInstanceRole
-    EcsTaskExecutionRole:
+
+    ExecutionRole:
         Type: AWS::IAM::Role
         Properties:
+            RoleName: ECSExecutionRole
             AssumeRolePolicyDocument:
                 Version: '2008-10-17'
                 Statement:
@@ -115,14 +76,13 @@ Resources:
                         Action: sts:AssumeRole
             Path: /
             Policies:
-                -   PolicyName: kms-decryption
+                -   PolicyName: ecs-execution-policy
                     PolicyDocument:
                         Version: "2012-10-17"
                         Statement:
                             -   Effect: Allow
                                 Action:
                                     - "kms:*"
-                                    - "ec2:*"
                                     - "ecs:*"
                                     - "ecr:*"
                                     - "logs:*"
@@ -130,6 +90,17 @@ Resources:
             ManagedPolicyArns:
                 - arn:aws:iam::aws:policy/SecretsManagerReadWrite
                 - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+    TaskRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: ECSTaskRole
+            AssumeRolePolicyDocument:
+                Statement:
+                    -   Effect: Allow
+                        Principal:
+                            Service: ecs-tasks.amazonaws.com
+                        Action: 'sts:AssumeRole'
+            ManagedPolicyArns:
                 - arn:aws:iam::aws:policy/AmazonS3FullAccess
                 - arn:aws:iam::aws:policy/AmazonRDSFullAccess
                 - arn:aws:iam::aws:policy/AmazonRedshiftDataFullAccess
@@ -144,25 +115,18 @@ Resources:
             - ''
             - - !Ref 'AWS::StackName'
               - '-update-RDS-data-from-S3'
-          Parameters:
-              rdshost: !Ref RDSHost
-              rdsport: !Ref RDSPort
-              rdsuser: !Ref RDSUser
-              rdspassword: !Ref RDSPassword
-              rdsdbname: !Ref RDSDBName
-              redshifthost: !Ref RedshiftHost
-              redshiftport: !Ref RedshiftPort
-              redshiftuser: !Ref RedshiftUser
-              redshiftpassword: !Ref RedshiftPassword
-              redshiftdbname: !Ref RedshiftDBName
           ContainerProperties:
               Image: !Sub "${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/awsbatch-rds:latest"
               LogConfiguration:
                       LogDriver: 'awslogs'
-              Command: ["Ref::rdshost", "Ref::rdsport", "Ref::rdsuser", "Ref::rdspassword",
-                        "Ref::rdsdbname", "Ref::redshifthost", "Ref::redshiftport", "Ref::redshiftuser",
-                        "Ref::redshiftpassword", "Ref::redshiftdbname"]
-              ExecutionRoleArn: !GetAtt EcsTaskExecutionRole.Arn
+              #  All containers in this task are granted the permissions that are specified in this role.
+              # For jobs that run on Fargate resources, you must provide an execution role."
+              ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+              # "There is an optional task execution IAM role thar the container can assume for AWS permissions.
+              # e.g. to make API calls to S3 to read objects "
+              JobRoleArn: !GetAtt TaskRole.Arn
+              NetworkConfiguration:
+                  AssignPublicIp: ENABLED
               ResourceRequirements:
                   - Type: VCPU
                     Value: 2
