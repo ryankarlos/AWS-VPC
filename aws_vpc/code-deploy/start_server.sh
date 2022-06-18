@@ -6,4 +6,5 @@
 cd /home/ec2-user/sample-app
 
 # this runs silently in background after exiting terminal
+# https://docs.aws.amazon.com/codedeploy/latest/userguide/troubleshooting-deployments.html
 sudo python3.8 application.py > /dev/null 2> /dev/null < /dev/null &
