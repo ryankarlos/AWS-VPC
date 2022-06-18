@@ -104,6 +104,7 @@ Resources:
                                 Action:
                                    - "kms:*"
                                    - "logs:*"
+                                   - "ecr:*"
                                 Resource: '*'
             RoleName: EC2Role-RDS-Redshift-S3-SSMSecrets
             ManagedPolicyArns:

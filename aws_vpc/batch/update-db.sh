@@ -8,11 +8,11 @@ export AWS_DEFAULT_REGION=us-east-1
 RDS_SECRETS=$(aws secretsmanager get-secret-value --secret-id RDS-credentials --query SecretString --output text)
 
 
-export PGHOST=$(echo $RDS_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["host"])')
-export PGPORT=$(echo $RDS_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["port"])')
-export PGUSER=$(echo $RDS_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["username"])')
-export PGPASSWORD=$(echo $RDS_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["password"])')
-export PGDATABASE=$(echo $RDS_SECRETS | python -c 'import json, sys; print(json.load(sys.stdin)["dbname"])')
+export PGHOST=$(echo $RDS_SECRETS | python3.8 -c 'import json, sys; print(json.load(sys.stdin)["host"])')
+export PGPORT=$(echo $RDS_SECRETS | python3.8 -c 'import json, sys; print(json.load(sys.stdin)["port"])')
+export PGUSER=$(echo $RDS_SECRETS | python3.8 -c 'import json, sys; print(json.load(sys.stdin)["username"])')
+export PGPASSWORD=$(echo $RDS_SECRETS | python3.8 -c 'import json, sys; print(json.load(sys.stdin)["password"])')
+export PGDATABASE=$(echo $RDS_SECRETS | python3.8 -c 'import json, sys; print(json.load(sys.stdin)["dbname"])')
 
 
 echo "Copying data from S3 into EC2 for upload to RDS/Redshift"
