@@ -1,22 +1,22 @@
 version: 0.0
 os: linux
 files:
-  - source: /aws_vpc/eb-flask
+  - source: aws_vpc/aws-flask
     destination: /home/ec2-user/sample-app
 hooks:
   ApplicationStop:
-    - location: scripts/stop_server.sh
+    - location: aws_vpc/code-deploy/stop_server.sh
       timeout: 300
       runas: root
   BeforeInstall:
-    - location: scripts/install_dependencies.sh
+    - location: aws_vpc/code-deploy/install_dependencies.sh
       timeout: 300
       runas: root
   AfterInstall:
-    - location: scripts/install_pip_requirements.sh
+    - location: aws_vpc/code-deploy/install_pip_requirements.sh
       timeout: 300
       runas: root
   ApplicationStart:
-    - location: scripts/start_server.sh
+    - location: aws_vpc/code-deploy/start_server.sh
       timeout: 300
       runas: root

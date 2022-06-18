@@ -87,9 +87,6 @@ Resources:
                                     - "ecr:*"
                                     - "logs:*"
                                 Resource: '*'
-            ManagedPolicyArns:
-                - arn:aws:iam::aws:policy/SecretsManagerReadWrite
-                - arn:aws:iam::aws:policy/AmazonSSMFullAccess
     TaskRole:
         Type: AWS::IAM::Role
         Properties:
@@ -100,8 +97,19 @@ Resources:
                         Principal:
                             Service: ecs-tasks.amazonaws.com
                         Action: 'sts:AssumeRole'
+            Path: /
+            Policies:
+                  -   PolicyName: kmsforecstask
+                      PolicyDocument:
+                          Version: "2012-10-17"
+                          Statement:
+                              -   Effect: Allow
+                                  Action:
+                                      - "kms:*"
+                                  Resource: '*'
             ManagedPolicyArns:
                 - arn:aws:iam::aws:policy/AmazonS3FullAccess
+                - arn:aws:iam::aws:policy/SecretsManagerReadWrite
                 - arn:aws:iam::aws:policy/AmazonRDSFullAccess
                 - arn:aws:iam::aws:policy/AmazonRedshiftDataFullAccess
     # AWS Batch Job Definition

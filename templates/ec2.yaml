@@ -45,6 +45,9 @@ Resources:
         SecurityGroupIds:
             -   Ref: EC2SecurityGroup
         IamInstanceProfile: !Ref  EC2InstanceProfile
+        Tags :
+            -   Key: Name
+                Value: Development
     ElasticIP:
         Type: AWS::EC2::EIP
         Condition: CreateElasticIP
