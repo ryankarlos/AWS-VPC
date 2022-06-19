@@ -18,7 +18,7 @@ def index():
 def main(service_name, email):
     query = [
         """SELECT COUNT(*) FROM persons""",
-        """SELECT * FROM persons WHERE email LIKE '{}%'""".format(email),
+        """SELECT * FROM persons WHERE email LIKE '%{}%'""".format(email),
     ]
     results = query_db(query, service_name)
     if results is None:
