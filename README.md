@@ -52,8 +52,8 @@ Werkzeug==2.1.0
 
 #### Create AWS resource using CloudFormation
 
-The AWS Cloudformation templates are stored in `templates` folder. These are arranged in a heirarchy (nested stacks) where the root stack `nested-stack.yaml`
-is the  top level stack referencing the other nested stacks (`redshift.yaml`,`rds.yaml`, `VPC.yaml`). More info about nested stacks in the AWS docs https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html
+The AWS Cloudformation templates are stored in `templates` folder. Apart from the template `vpc.yaml`, the rest are arranged in a heirarchy (nested stacks) where the root stack `nested-stack.yaml`
+is the  top level stack referencing the other nested stacks (`redshift.yaml`,`rds-resource.yaml`, `batch-job.yaml`, `code-deploy.yaml`, `ec2.yaml`). More info about nested stacks in the AWS docs https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html
 
 Root stack `nested-stack.yaml` uses the AWS::CloudFormation::Stack resource to reference the child stack template containing the required resouce configuration,
 with a `DeletionPolicy::Retain`. The nested AWS::CloudFormation::Stack definition in the parent stack template matches the actual nested stack's template
@@ -68,6 +68,49 @@ $ aws cloudformation validate-template --template-body file://templates/redshift
 
 An error occurred (ValidationError) when calling the ValidateTemplate operation: Template format error: Unrecognized parameter type: Bool
 ```
+
+First we need to create the vpc resources from `vpc.yaml`. We can use the command below https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html or do this from the console. 
+https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html
+
+```
+aws cloudformation create-stack \
+--stack-name non-default-vpc \
+--template-body "file://${repo_root}/templates/vpc.yaml" \
+--parameters ParameterKey=NatGateway,ParameterValue=true \
+ParameterKey=InterfaceEndpoint,ParameterValue=true \
+```
+
+Navigating to the VPC dashboard in AWS - we can see the public and private subnets associated with the VPCS
+
+<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/vpc_subnets.png"></img>
+
+Each of these subnets has a route table which contain a set of routes to define where network traffic from subnet
+or gateway is directed. For the private subnet, traffic from the subnet to the public internet (`0.0.0.0/0`) is directed
+via the NAT gateway (`nat-0556f55bf98f77b90`).
+We have also configured a VPC endpoint `vpce-0c67618e7d07b7d22` to access S3 (`pl-63a5400a` is prefix id for
+S3), which can be seen in the route table
+
+<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/private-route-table-example.png"></img>
+
+For the public subnet, we have a route from the subnet to the Internet gateway (`igw-004cbef6dac3f9770`) to the
+public internet.  As with the private sunet, we have also configured the public subet to access S3 via the same
+VPC endpoint (`vpce-0c67618e7d07b7d22`).
+
+<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/private-route-table-example.png"></img>
+
+All the security groups for EC2, RDS, Redshift , with inbound and outbound rules should be created as below
+
+<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/security_groups.png></img>
+
+There should be two S3 gateway endpoints (one for each VPC) to allow commununcation between resources in any subnet in both VPCs and S3.
+The interface endpoint (powered by AWS PrivateLink) is configured for Secrets Manager to allow traffic to go through AWS network
+
+<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/vpc-endpoints.png"></img>
+
+we can also analyse the route between source and destination https://docs.aws.amazon.com/vpc/latest/reachability/getting-started.html 
+and see if it is reachable with new configuration. e.g. below  we have created a route between Ec2 instance and VPC peering connection and analysed the path. if the route table and security  groups were congiured correctly, then there should be a successful path as analysed below
+
+<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/reachability-analysis-vpc-peering.png"></img>
 
 Running the bash script create_stacks.sh  will create all the nested stacks and root stack,
 using the create-stack action for cloudformation via cli https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html
@@ -157,27 +200,6 @@ If there is an error, then check the reason in the 'events' tab of the child sta
 
 <img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/Nested-Stack-console.png></img>
 
-Navigating to the VPC dashboard in AWS - we can see the public and private subnets associated with the VPCS
-
-<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/vpc_subnets.png"></img>
-
-Each of these subnets has a route table which contain a set of routes to define where network traffic from subnet
-or gateway is directed. For the private subnet, traffic from the subnet to the public internet (`0.0.0.0/0`) is directed
-via the NAT gateway (`nat-0556f55bf98f77b90`).
-We have also configured a VPC endpoint `vpce-0c67618e7d07b7d22` to access S3 (`pl-63a5400a` is prefix id for
-S3), which can be seen in the route table
-
-<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/private_subnet_rt_example.png"></img>
-
-For the public subnet, we have a route from the subnet to the Internet gateway (`igw-004cbef6dac3f9770`) to the
-public internet.  As with the private sunet, we have also configured the public subet to access S3 via the same
-VPC endpoint (`vpce-0c67618e7d07b7d22`).
-
-<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/public_subnet_rt_example.png"></img>
-
-The security groups `EC2 non default` and `RDS non default` for the VPC created, with inbound and outbound rules
-
-<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/security_groups.png></img>
 
 ### AWS VPC Basics
 
