@@ -53,8 +53,17 @@ We have already configured the batch job parameters in cloud formation - includi
 the ECR image entrypoint script, which will execute once the container is deployed and running in
 ECS Fargate
 
-````
+```
 aws s3 cp data/sample-data.txt s3://s3-eventbridge-batch/sample-data.txt
 
 upload: data/sample-data.txt to s3://s3-eventbridge-batch/sample-data.txt
 ```
+
+
+<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/aws-batch-dashboard.png></img>
+
+<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/aws-batch-jobs-status.png></img>
+
+<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/aws-batch-logs.png></img>
+
+
