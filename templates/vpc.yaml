@@ -27,6 +27,12 @@ Parameters:
         - true
         - false
     Type: String
+  InterfaceEndpoint:
+    Description: Whether to create Interface Endpoint
+    AllowedValues:
+        - true
+        - false
+    Type: String
   DefaultVPCid:
       Description: ID of the default VPC
       Type: String
@@ -43,6 +49,10 @@ Parameters:
       Description: ID of the Default VPC Route Table associated with all the private subnets
       Type: String
       Default: "rtb-0a4f8f4c9d1743a38"
+  InterfaceEndPointService:
+      Description: Service name if creating interface endpoint. Defaults to secrets manager
+      Type: String
+      Default: "secretsmanager"
 Conditions:
   CreateNatGateway: !Equals
     - !Ref NatGateway
@@ -50,6 +60,9 @@ Conditions:
   NoNatGateway: !Equals
     - !Ref NatGateway
     - false
+  CreateInterfaceEndPoint: !Equals
+    - !Ref InterfaceEndpoint
+    - true
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
@@ -169,6 +182,34 @@ Resources:
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
       VpcId:
         Ref: DefaultVPCid
+  SecretsInterfaceEndpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Condition: CreateInterfaceEndPoint
+    Properties:
+        VpcEndpointType: Interface
+        ServiceName: !Sub 'com.amazonaws.${AWS::Region}.${InterfaceEndPointService}'
+        VpcId: !Ref VPC
+        PrivateDnsEnabled: true
+        SubnetIds:
+          - !Ref PublicSubnet1
+          - !Ref PublicSubnet2
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+        SecurityGroupIds:
+          - !Ref IESecurityGroup
+  IESecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+        GroupDescription: "Interface Endpoint Security Group"
+        VpcId: !Ref VPC
+        SecurityGroupIngress:
+            -   IpProtocol: tcp
+                FromPort: 443
+                ToPort: 443
+                CidrIp: !GetAtt VPC.CidrBlock
+        Tags:
+            -   Key: Name
+                Value: Interface-Endpoint
   AttachGateway:
     Type: "AWS::EC2::VPCGatewayAttachment"
     Properties:

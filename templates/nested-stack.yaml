@@ -116,3 +116,9 @@ Resources:
                   Fn::GetAtt:
                       - NestedEC2Stack
                       - Outputs.EC2SecurityGroup
+  NestedCodeDeployStack:
+      Type: 'AWS::CloudFormation::Stack'
+      DeletionPolicy: Retain
+      Properties:
+          TemplateURL: >-
+              https://cf-templates-wnxns0c4jjl4-us-east-1.s3.amazonaws.com/code-deploy.yaml

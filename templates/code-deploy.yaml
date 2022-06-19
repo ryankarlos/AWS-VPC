@@ -1,0 +1,48 @@
+Description: "Creates a batchjob for updating RDS db when S3 data is updated"
+Parameters:
+  EC2TagKey0:
+        Type: String
+        Description: "EC2 Instance Tag Key"
+        Default: Name
+  EC2TagValue0:
+      Type: String
+      Description: "EC2 Instance Tag Value"
+      Default: Development
+  CodeDeployServiceRole:
+    Default: CodeDeployRole
+    Type: String
+    Description: "Code Deploy Service Role"
+  DeploymentGroupName:
+    Type: String
+    Default: EC2-DeploymentGroup
+    Description: "Deployment Group Name"
+  ApplicationName:
+      Type: String
+      Default:  DeployEC2
+      Description: "Application Name"
+  DeploymentConfigName:
+      Type: String
+      Description: "DeploymentConfigName"
+      Default: CodeDeployDefault.OneAtATime
+      AllowedValues:
+          - CodeDeployDefault.OneAtATime
+          - CodeDeployDefault.HalfAtATime
+          - CodeDeployDefault.AllAtOnce
+Resources:
+    CodeDeployApplication:
+        Type: AWS::CodeDeploy::Application
+        Properties:
+            ApplicationName: !Ref ApplicationName
+            ComputePlatform: Server
+    DeploymentGroup:
+        Type: AWS::CodeDeploy::DeploymentGroup
+        Properties:
+            ApplicationName:
+                Ref: CodeDeployApplication
+            DeploymentConfigName: !Ref DeploymentConfigName
+            DeploymentGroupName: !Ref DeploymentGroupName
+            Ec2TagFilters:
+                - Key: !Ref EC2TagKey0
+                  Value: !Ref EC2TagValue0
+                  Type: KEY_AND_VALUE
+            ServiceRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/${CodeDeployServiceRole}"

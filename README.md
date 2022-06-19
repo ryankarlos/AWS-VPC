@@ -84,19 +84,43 @@ creating these - then set these to false (as in command below)
 $ sh aws_vpc/create_stacks.sh <username> <password> <ip> <path-to-gh-repo-root> false false
 
 Uploading templates to s3:
-upload: templates/create_stacks.sh to s3://cf-templates-wnxns0c4jjl4-us-east-1/create_stacks.sh
 upload: templates/redshift.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/redshift.yaml
-upload: templates/resourcesToImport.txt to s3://cf-templates-wnxns0c4jjl4-us-east-1/resourcesToImport.txt
-upload: templates/nested-stack.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/nested-stack.yaml
-upload: templates/vpc.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/vpc.yaml
-upload: templates/ec2.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/ec2.yaml
+upload: templates/code-deploy.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/code-deploy.yaml
+upload: templates/batch-job.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/batch-job.yaml
 upload: templates/rds-resource.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/rds-resource.yaml
+upload: templates/nested-stack.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/nested-stack.yaml
+upload: templates/ec2.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/ec2.yaml
+upload: templates/vpc.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/vpc.yaml
 
 Creating nested stacks:
 
 {
     "StackId": "<arn>"
 }
+```
+
+
+To update nested stacks if parameters of root stack have not changed, run the following
+update script - passing in the root of the gh repo as the first arg.
+
+```
+sh aws_vpc/update_stacks.sh <repo-root>
+
+Uploading templates to s3:
+upload: templates/redshift.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/redshift.yaml
+upload: templates/code-deploy.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/code-deploy.yaml
+upload: templates/batch-job.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/batch-job.yaml
+upload: templates/rds-resource.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/rds-resource.yaml
+upload: templates/nested-stack.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/nested-stack.yaml
+upload: templates/ec2.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/ec2.yaml
+upload: templates/vpc.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/vpc.yaml
+
+Updating nested stacks:
+
+{
+    "StackId": "arn:aws:cloudformation:us-east-1:376337229415:stack/Nested-RDS-Redshift-EC2-VPC/9070c9e0-ecfb-11ec-9503-0a897404d5d5"
+}
+
 ```
 
 To teardown the cloudformation stacks run the teardown.sh bash script. This assumes the root stack name
