@@ -1,7 +1,7 @@
 ### Deploying with AWS Elastic Beanstalk
 
-As an alternative to the workflow described in `aws-vpc/README.md` which involves manual steps to deploying in
-an EC2 instance - we can also use AWS Elastic Beanstalk to automate this and quickly provision and operate all necessary
+As an alternative to the workflow described in `aws-vpc/code-deploy/README.md` which involves manual steps to deploying
+an EC2 instance using AWS CodeDeploy - we can also use AWS Elastic Beanstalk to automate this and quickly provision and operate all necessary
 infrastructure (e.g. EC2, load balancers, auto scaling groups, security and networking etc)
 https://docs.aws.amazon.com/whitepapers/latest/overview-deployment-options/aws-elastic-beanstalk.html
 We can also create an RDS DB with EB or add one previously created  to the EB environment.
@@ -273,7 +273,12 @@ Go to connect -> SSH client for instructions on how to ssh into the instance as 
 [ec2-user@ip-10-0-1-41 ~]$ ls
 ```
 
-To terminate the aplication and automatically teardown the resources, first remove the inbound rule in RDS security group
+
+When the environment creation process completes, open your web site with `eb open` from cli.
+This will open a browser  using the domain name created for your application
+https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html
+
+To terminate the application and automatically teardown the resources, first remove the inbound rule in RDS security group
 which references EB security group. Then run `eb terminate eb-flask`
 
 <img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/ELB-terminate-eb-application.png></img>
