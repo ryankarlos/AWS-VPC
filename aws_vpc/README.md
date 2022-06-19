@@ -133,3 +133,24 @@ and postgresql/psql in the container
 <img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/code-deploy-console-successful-deployment-stages.png"></img>
 
 
+If deployment is successful, we should be able to see the main page if navigate to the public ipv4 address for the ec2 instance (e..g
+http://ec2-54-82-27-180.compute-1.amazonaws.com)
+
+
+<img width=800 src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/flask-website/main-page.png"></img>
+
+we can navigate to the child pages by appending `/<redshift/rds>/<email-address>` and checking the associated details for the email address in 
+the respective db (in RDS or Redshift)
+
+
+<img width=800 src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/flask-website/rds-email-filter-result.png"></img>
+
+We can also enter the first part of the email address (e.g without the domain) and it should return the results 
+
+
+<img width=800 src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/flask-website/email-filter-part-address.png"></img>
+
+If the email is entered incorrectly, then an error is returned
+
+
+<img width=800 src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/flask-website/error-message.png"></img>
