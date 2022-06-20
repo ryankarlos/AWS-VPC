@@ -49,7 +49,7 @@ We have two methods of deploying to EC2 instance:
 The elastic beanstalk approach is described in https://github.com/ryankarlos/AWS-VPC/blob/master/aws_vpc/aws-flask/README.md
 Here we will describe the approach using AWS Code Deploy
 
-<img height=500 src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/codedeploy-ec2-rds-redshift-different-vpc-architecture.png></img>
+<img height=500 src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/codedeploy-ec2-rds-redshift-different-vpc.png></img>
 
 The cloudformation nested stack in templates folder automatically creates the application and
 deployment group with configuration required for code deployment to EC2 instance. To account for the requirements, we have created an EC2 instance in public subnet and RDS database in a private subnet in same VPC and Redshift in another VPC. Redshift is in public subnet but the public accessibility option is disabled. 
