@@ -19,6 +19,7 @@ with some modifications where we will also have a Redshift cluster in same VPC, 
 
 #### Installing and configuring Elastic Beanstalk cli
 
+Assuming the other resources are created and active (instructions in `README.md` at repo root)
 First need to install Elastic Beanstalk cli from https://github.com/aws/aws-elastic-beanstalk-cli-setup
 As per the instructions in the aws repo:
 

@@ -51,11 +51,12 @@ Here we will describe the approach using AWS Code Deploy
 
 <img height=500 src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/codedeploy-ec2-rds-redshift-different-vpc.png></img>
 
-The cloudformation nested stack in templates folder automatically creates the application and
-deployment group with configuration required for code deployment to EC2 instance. To account for the requirements, we have created an EC2 instance in public subnet and RDS database in a private subnet in same VPC and Redshift in another VPC. Redshift is in public subnet but the public accessibility option is disabled. 
+The cloudformation nested stack in templates folder (instructions in `Create AWS resource using CloudFormation` section
+in the README.md at root of the repo) automatically creates the application and
+deployment group with configuration required for code deployment to EC2 instance. To account for the requirements, we have created an EC2 instance in public subnet and RDS database in a private subnet in same VPC and Redshift in another VPC. Redshift is in public subnet but the public accessibility option is disabled.
 A NAT gateway would allow outbound traffic from RDS in private subnet to reach the internet via the internet gateway if required
 but prevent any inbound access. The inbound rules for RDS security group should allow tcp access from EC2 to port 5432 on which postgres is available.
-To communicate between EC2 and Redshift in different VPC we have set up VPC peering connection and added this to the route tables for subnets where redshift and EC2 are created. We have also configured inbound rules to allow traffic from security groups atatched to EC2 and Redshift on port 5439. 
+To communicate between EC2 and Redshift in different VPC we have set up VPC peering connection and added this to the route tables for subnets where redshift and EC2 are created. We have also configured inbound rules to allow traffic from security groups atatched to EC2 and Redshift on port 5439.
 Finally, an interface endpoint for secrets manager, powered by AWS Private Link would ensure traffic only goes through the AWS network.
 
 To test this we can check the DNS resolution for the secrets manager private DNS name (`secretsmanager.us-east-1.amazonaws.com`)  and traceroute. The Secrets manager DNS name should start resolving to private IPs (Endpoint ENI IPs) if interface endpoint config is setup correctly and private DNS for the endpoint is enabled (this allows making API requests to Secrets Manager using its default DNS name e.g.`secretsmanager.us-east-1.amazonaws.com`
@@ -139,13 +140,13 @@ http://ec2-54-82-27-180.compute-1.amazonaws.com)
 
 <img width=800 src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/flask-website/main-page.png"></img>
 
-we can navigate to the child pages by appending `/<redshift/rds>/<email-address>` and checking the associated details for the email address in 
+we can navigate to the child pages by appending `/<redshift/rds>/<email-address>` and checking the associated details for the email address in
 the respective db (in RDS or Redshift)
 
 
 <img width=800 src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/flask-website/rds-email-filter-result.png"></img>
 
-We can also enter the first part of the email address (e.g without the domain) and it should return the results 
+We can also enter the first part of the email address (e.g without the domain) and it should return the results
 
 
 <img width=800 src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/flask-website/email-filter-part-address.png"></img>
@@ -154,3 +155,9 @@ If the email is entered incorrectly, then an error is returned
 
 
 <img width=800 src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/flask-website/error-message.png"></img>
+
+
+We can track the status of past deployments for this application in  CodeDeploy deployment group
+
+<img width=800 src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/code-deploy-deployment-group-status.png"></img>
+

@@ -33,20 +33,58 @@ We will also have scenarios where we would need instances in one VPC to talk to 
 same or different AWS accounts. This can be achieved by means of solutions like "VPC Peering Connection" or a "AWS
 Transit Gateway". At the core of it, you would basically have a route for remote VPC subnet with the "gateway" pointing
 to either a VPC peering connection or Transit GW as appropriate.
+A VPC peering connection is a networking connection between two VPCs that enables you to route traffic between them using private IPv4 addresses
+or IPv6 addresses. Instances in either VPC can communicate with each other as if they are within the same network. You can create a VPC peering connection between your own VPCs, or with a VPC in another AWS account.
+The VPCs can be in different regions (also known as an inter-region VPC peering connection).
 
-Now, apart from VPC, we have multiple other AWS provided solutions (like RDS, S3, etc). These services are usually
-reachable from internet. However, AWS also allows connecting to such services via AWS backbone network without need of
-IGW or NGW. Thus, you can have "private" instances which don't have access to internet talk to these public AWS
-solutions by means of "Endpoints". The gist of it, again, is a route for those services pointing to "Endpoint" as
-gateway. Traffic between an Amazon VPC and a service does not leave the Amazon network when going via an endpoint:
+Now, apart from VPC, we have multiple other AWS provided solutions (like RDS, S3, etc). These services are usually reachable from internet. However,
+AWS also allows you to privately connect your VPC to supported AWS services without requiring an internet gateway, NAT device,
+VPN connection, or AWS Direct Connect connection. This is achieved by means of "Endpoints".
+Endpoints are virtual devices that are horizontally scaled, redundant, and highly available VPC components. V
+PC endpoints allow communication between instances in your VPC and services, without imposing availability risks or
+bandwidth constraints on your network traffic. You can optimize the network path by avoiding traffic to internet gateways
+and incurring cost associated with NAT gateways, NAT instances or maintaining firewalls. VPC endpoints also provide you with much finer control over how users and applications access AWS services.
+With VPC endpoints enabled, Instances in your VPC do not require public IP addresses to communicate with the Amazon services. Traffic between your VPC resources and the Amazon service (For ex: SQS, Secrets manager etc) does not leave the Amazon network.
+VPC endpoints allows you to connect Amazon services only within the region.
 
-* AWS PrivateLink is a service which basically provides Amazon VPCs with a secure and scalable way to privately connect
+There are two types of VPC endpoints.
+
+1. A Gateway endpoint is a target for a route in a route table to connect VPC resources to S3 or DynamoDB. When enabled, the route table automatically updates the prefix list of service and target endpoints.
+Gateway endpoint is created at the VPC level and not at the subnet level. A route is automatically added to the Route table with a destination that specifies the prefix list of service and the target with the endpoint id for e.g. A rule
+   with destination pl-68a54001 (com.amazonaws.us-west-2.s3) and a target with this endpoints’ ID (e.g. vpce-12345678) will be added to the route tables
+A Gateway endpoint, currently allows you to connect to Amazon Simple Storage Service (S3) and Amazon DynamoDB service using private IP addresses. You route traffic from your VPC to the gateway endpoint using route tables. Gateway endpoints do not enable AWS PrivateLink.
+You can also configure resource policies on both the gateway endpoint and the AWS resource that the endpoint provides access to. A VPC endpoint policy is an AWS Identity and Access Management (AWS IAM) resource policy that you can attach to an endpoint. It is a separate policy
+   for controlling access from the endpoint to the specified service. This enables granular access control and private network connectivity from within a VPC.
+Note: As mentioned above, Gateway endpoints are available only for Amazon S3 and Amazon DynamoDB services, and they are available at no additional cost. Gateway endpoints can only be used by the resources within the VPC.
+
+* Limitations:
+
+1) Endpoints are supported within the same Region only. Endpoint cannot be created between a VPC and an AWS service in a different region.
+2) Endpoints support IPv4 traffic only.
+3) Endpoint cannot be transferred from one VPC to another, or from one service to another
+4) Endpoint connections cannot be extended out of a VPC i.e. resources across the VPN connection, VPC peering connection, AWS Direct Connect connection cannot use the endpoint.
+
+2. Interface endpoints
+
+Interface endpoints enable connectivity to services over AWS PrivateLink. WS PrivateLink is a service which basically provides Amazon VPCs with a secure and scalable way to privately connect
 to such hosted services. AWS PrivateLink traffic does not use public IP addresses nor traverse the internet.
-There are two types of VPC endpoints, namely Interface endpoints and Gateway endpoints.
-* Gateway Endpoints are limited to providing connectivity to Amazon S3 and DynamoDB service only and they do not leverage AWS PrivateLink.
-* Interface endpoints enable connectivity to services over AWS PrivateLink. These services include some AWS managed services,
-services hosted by other AWS customers and partners in their own Amazon VPCs (referred to as endpoint services),
-and supported AWS Marketplace partner services.
+The Interface endpoints reside inside a subnet and need to be in an Availability Zone (for HA, put one in each AZ)
+While creating Interface endpoint, It will allow you to choose a subnet from your VPC. For each subnet that you specify from your VPC, we create an
+endpoint network interface in the subnet and assign it a private IP address from the subnet address range.
+A private IP address also ensures the traffic remains private without any changes to the route table.
+AWS recently enabled AWS PrivateLink support for S3 and DynamoDB service. So, We can use Interface endpoint for S3 and DynamoDB service as well.
+For Interface endpoints, You are billed for hourly usage and data processing charges. https://aws.amazon.com/privatelink/pricing/
+Interface endpoint has its own set of DNS names, including one for AZ, region and private DNS name.
+You can use regional (or) AZ level DNS name as well to access your Interface endpoint.
+For Example consider secret manager service:
+
+vpce-08e129ac470yyyyyy-xxxxxx.secretsmanager.us-east-1.vpce.amazonaws.com  --> Regional DNS Name
+vpce-08e129ac470yyyyyy-xxxxxx-us-east-1a.secretsmanager.us-east-1.vpce.amazonaws.com  ---> Zonal DNS name
+secretsmanager.us-east-1.amazonaws.com   ---> DNS Name of Secrets manager service in us-east-1 region
+
+Normally, DNS name of the AWS service resolves to regional Public IPs. When you enable 'private DNS name' for the interface endpoint, DNS name of Secrets manager service will start resolve to private IPs.
+In comparison, Gateway Endpoints described above are limited to providing connectivity to Amazon S3 and DynamoDB service only and they do not leverage AWS PrivateLink.
+
 
 Now, further access for IP's is controlled individually at each instance level by means of Security Group (SG).
 SG's are discussed in reference [5]
@@ -61,7 +99,7 @@ SG's are discussed in reference [5]
 
 This repo shows examples of AWS options for configuring VPC and allowing network traffic to internet
 and other services. We will deploy a flask application in ec2 instance in VPC and communicate with RDS instance in same VPC
-and Redshift in separate VPC. 
+and Redshift in separate VPC.
 
 #### Setup venv
 
@@ -124,7 +162,7 @@ $ aws cloudformation validate-template --template-body file://templates/redshift
 An error occurred (ValidationError) when calling the ValidateTemplate operation: Template format error: Unrecognized parameter type: Bool
 ```
 
-First we need to create the vpc resources from `vpc.yaml`. We can use the command below https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html or do this from the console. 
+First we need to create the vpc resources from `vpc.yaml`. We can use the command below https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html or do this from the console.
 https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html
 
 ```
@@ -162,7 +200,7 @@ The interface endpoint (powered by AWS PrivateLink) is configured for Secrets Ma
 
 <img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/vpc-endpoints.png"></img>
 
-we can also analyse the route between source and destination https://docs.aws.amazon.com/vpc/latest/reachability/getting-started.html 
+we can also analyse the route between source and destination https://docs.aws.amazon.com/vpc/latest/reachability/getting-started.html
 and see if it is reachable with new configuration. e.g. below  we have created a route between Ec2 instance and VPC peering connection and analysed the path. if the route table and security  groups were congiured correctly, then there should be a successful path as analysed below
 
 <img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/reachability-analysis-vpc-peering.png"></img>
