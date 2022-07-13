@@ -296,16 +296,6 @@ If there is an error, then check the reason in the 'events' tab of the child sta
  ![](screenshots/Nested-Stack-console.png) 
 
 
-#### Example workflows
-
-Once the resources are created, we can run the following example workflows:
-
-1. **Deploy a flask application in ec2 instance in VPC and communicate with RDS instance in same VPC
-and Redshift in separate VPC**. Click [here](aws_vpc)
-2. **Using Elastic Beanstalk to automate webserver deployment**. Click [here](/aws_vpc/aws-flask)
-3. **Using AWS Batch to update data in RDS instance**. Click [here](aws_vpc/batch)
-
-
 #### References
 1) https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html
 2) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html
