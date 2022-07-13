@@ -305,11 +305,11 @@ If there is an error, then check the reason in the 'events' tab of the child sta
 
 
 ## References
-1) https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html
-2) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html
-3) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html
-4) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html
-5) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+1. https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html
+2. https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html
+3. https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html
+4. https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html
+5. https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
 
 
 
