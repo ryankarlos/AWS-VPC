@@ -152,7 +152,8 @@ Root stack `nested-stack.yaml` uses the AWS::CloudFormation::Stack resource to r
 with a `DeletionPolicy::Retain`. The nested AWS::CloudFormation::Stack definition in the parent stack template matches the actual nested stack's template
 which needs to be uploaded to S3 and https url referenced in the `TemplateURL` property.
 
-<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/cloudformation_nested_stack_architecture.png"></img>
+![](screenshots/cloudformation_nested_stack_architecture.png) 
+
 
 To validate cloud formation template(s) run the following command as below (replacing the template path with the path to your template) which should return a ValidationError if the template is malformed or contains incorrect keys, syntax errors or references to logical ids etc
 
@@ -165,7 +166,7 @@ An error occurred (ValidationError) when calling the ValidateTemplate operation:
 First we need to create the vpc resources from `vpc.yaml`. We can use the command below https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html or do this from the console.
 https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html
 
-```
+```Shell
 aws cloudformation create-stack \
 --stack-name non-default-vpc \
 --template-body "file://${repo_root}/templates/vpc.yaml" \
@@ -175,7 +176,8 @@ ParameterKey=InterfaceEndpoint,ParameterValue=true \
 
 Navigating to the VPC dashboard in AWS - we can see the public and private subnets associated with the VPCS
 
-<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/vpc_subnets.png"></img>
+![](screenshots/vpc_subnets.png) 
+
 
 Each of these subnets has a route table which contain a set of routes to define where network traffic from subnet
 or gateway is directed. For the private subnet, traffic from the subnet to the public internet (`0.0.0.0/0`) is directed
@@ -183,27 +185,31 @@ via the NAT gateway (`nat-0556f55bf98f77b90`).
 We have also configured a VPC endpoint `vpce-0c67618e7d07b7d22` to access S3 (`pl-63a5400a` is prefix id for
 S3), which can be seen in the route table
 
-<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/private-route-table-example.png"></img>
+![](screenshots/private-route-table-example.png) 
 
 For the public subnet, we have a route from the subnet to the Internet gateway (`igw-004cbef6dac3f9770`) to the
 public internet.  As with the private sunet, we have also configured the public subet to access S3 via the same
 VPC endpoint (`vpce-0c67618e7d07b7d22`).
 
-<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/private-route-table-example.png"></img>
+
+![](screenshots/public_subnet_rt_example.png) 
 
 All the security groups for EC2, RDS, Redshift , with inbound and outbound rules should be created as below
 
-<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/security_groups.png></img>
+![](screenshots/security_groups.png) 
+
 
 There should be two S3 gateway endpoints (one for each VPC) to allow commununcation between resources in any subnet in both VPCs and S3.
 The interface endpoint (powered by AWS PrivateLink) is configured for Secrets Manager to allow traffic to go through AWS network
 
-<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/vpc-endpoints.png"></img>
+![](screenshots/vpc-endpoints.png) 
+
 
 we can also analyse the route between source and destination https://docs.aws.amazon.com/vpc/latest/reachability/getting-started.html
 and see if it is reachable with new configuration. e.g. below  we have created a route between Ec2 instance and VPC peering connection and analysed the path. if the route table and security  groups were congiured correctly, then there should be a successful path as analysed below
 
-<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/reachability-analysis-vpc-peering.png"></img>
+![](screenshots/reachability-analysis-vpc-peering.png) 
+
 
 Running the bash script create_stacks.sh  will create all the nested stacks and root stack,
 using the create-stack action for cloudformation via cli https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html
