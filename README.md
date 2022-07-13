@@ -9,9 +9,9 @@ The material below can also be viewed in [Github Pages](https://ryankarlos.githu
 ## Table of Contents
 
 1. [Basics](#Basics)
-2. [Setup Virtual Environment](#Setup Virtual Environment)
-3. [Create Resources using CloudFormation](#Create AWS resource using CloudFormation)
-4. [Example Workflows](#Example Workflows)
+2. [Setup Virtual Environment](#setup-virtual-environment)
+3. [Create Resources using CloudFormation](#create-aws-resource-using-cloudformation)
+4. [Example Workflows](#example-workflows)
 5. [References](#References)
 
 
