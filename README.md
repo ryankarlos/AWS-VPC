@@ -90,9 +90,11 @@ Now, further access for IP's is controlled individually at each instance level b
 SG's are discussed in reference [5]
 
 
-For the next sections, we will setup the environment and create AWS resources in different VPC before running example workflows using 
-to deploy webserver in EC2 instance in a VPC which communicates with RDS instance in same VPC and Redshift in a different VPC using some of the resources 
-described in this section. We will also create a batch job to update the RDS instance, and will get triggered when data in S3 is updated.
+For the next sections, we will first setup a local environment and then use **cloudformation** to create  VPC, subnets, route tables, security groups, VPC endpoints and associate with RDS,Redshift and EC2 resources before running the following **example workflows**:
+
+1. [**Deploy webserver**](aws_vpc) in EC2 instance in a VPC which communicates with RDS instance in same VPC and Redshift in a different VPC using some of the resources described in this section
+2. [**Use Elastic Beanstalk**](aws_vpc/aws-flask) to automate webserver deployment.
+3. [**Use AWS Batch**](aws_vpc/batch) to update the RDS instance, and will get triggered when data in S3 is updated.
 
 
 #### Setup venv
@@ -100,7 +102,7 @@ described in this section. We will also create a batch job to update the RDS ins
 First `cd` to the `eb-flask` folder in `aws-vpc` and then run the following command to setup a virtual env named `virt` and activate it
 
 ```
-(base) rk1103@Ryans-MacBook-Air eb-flask % virtualenv virt
+$ virtualenv virt
 created virtual environment CPython3.9.1.final.0-64 in 2870ms
   creator CPython3Posix(dest=/Users/rk1103/Documents/AWS-VPC/aws_vpc/eb-flask/virt, clear=False, no_vcs_ignore=False, global=False)
   seeder FromAppData(download=False, pip=bundle, setuptools=bundle, wheel=bundle, via=copy, app_data_dir=/Users/rk1103/Library/Application Support/virtualenv)
@@ -113,13 +115,13 @@ Install the dependencies from the `requirements.txt` file in `eb-flask` folder. 
 dependencies then install from `requirements_dev.txt`
 
 ```
-(virt) (base) rk1103@Ryans-MacBook-Air eb-flask % pip install -r requirements.txt
+(virt) (base) $ pip install -r requirements.txt
 ```
 
 To view installed dependencies in the environment run `pip freeze`
 
 ```
-(virt) (base) rk1103@Ryans-MacBook-Air eb-flask % pip freeze
+(virt) (base) $ pip freeze
 
 boto3==1.24.2
 botocore==1.27.2
@@ -254,7 +256,7 @@ upload: templates/vpc.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/vpc.yaml
 Updating nested stacks:
 
 {
-    "StackId": "arn:aws:cloudformation:us-east-1:376337229415:stack/Nested-RDS-Redshift-EC2-VPC/9070c9e0-ecfb-11ec-9503-0a897404d5d5"
+    "StackId": "arn:aws:cloudformation:<REGION>:<ACCOUNT-ID>:stack/Nested-RDS-Redshift-EC2-VPC/9070c9e0-ecfb-11ec-9503-0a897404d5d5"
 }
 
 ```
