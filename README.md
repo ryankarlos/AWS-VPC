@@ -297,7 +297,7 @@ were referenced in the root stack template. The resources (logical-id, physics-i
 type) created can  be found in the 'resources' tab for each stack.
 If there is an error, then check the reason in the 'events' tab of the child stack that has thrown the error.
 
-<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/Nested-Stack-console.png></img>
+ ![](screenshots/Nested-Stack-console.png) 
 
 
 ### Credits
