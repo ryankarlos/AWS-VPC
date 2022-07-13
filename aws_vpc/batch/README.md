@@ -3,10 +3,10 @@
 [AWS Batch]( https://docs.aws.amazon.com/batch/latest/userguide/what-is-batch.html) simplifies running batch jobs across multiple Availability Zones within a Region.
 It comprises the following components:
 
->* Job Definition: Specifies container properties, environment variables,memory and CPU requirements etc.
+* Job Definition: Specifies container properties, environment variables,memory and CPU requirements etc.
  for jobs to run. You can also specify IAM roles for access to other resources.
  
->* Job Queue:n AWS Batch job, you submit it to a particular job queue, where the job resides until it's
+* Job Queue:The Batch Job is submitted to a particular job queue, where the job resides until it's
  scheduled onto a compute environment. Each job queue can support either multiple Fargate (spot or on demand)
  or multiple EC2 types  (spot or on demand). The compute environments are used in ascending order depending 
  on the speciifed ordering (1(first) -> 2(next) -> 3(next)).
@@ -16,7 +16,7 @@ Also, if 1st CE has instance with 2vCPU and other CE has instance with 4vCPU. If
 until Max VCPU is reached, and then it will start the 2nd CE. On other hand, if job needs more than 2vCPU let’s 
 say 3 or 4 vCPU then it will start the 2nd CE.
   
->* Compute environments within a new or existing VPC. AWS Batch efficiently launches, manages, and terminates compute
+* Compute environments within a new or existing VPC. AWS Batch efficiently launches, manages, and terminates compute
   types (serverless Fargate or managed EC2)  as needed. You can also manage your own compute environments.
 
 
