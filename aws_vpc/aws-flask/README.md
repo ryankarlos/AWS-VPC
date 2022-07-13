@@ -11,17 +11,15 @@ security group associated with Elastic DB instance. Although as mentioned in the
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/, this will create a dependency between EB and RDS
 security groups which means that we would need to delete this inbound rule before terminating EB application
 and all the resources. AWSHowTo.RDS.html
-The next few sections, will follow the tutorial in AWS docs https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html
+The next few sections, will follow this [tutorial](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html) in AWS docs 
 with some modifications where we will also have a Redshift cluster in same VPC, and configure security group inbound rules to allow the EC2 instances in the EB environment to communciate with Redshift cluster and vice versa.
 
-<img src="https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/elastic_beanstalk_deploy_flask.png"></img>
-
+![](../../screenshots/elastic_beanstalk_deploy_flask.png) 
 
 #### Installing and configuring Elastic Beanstalk cli
 
 Assuming the other resources are created and active (instructions in `README.md` at repo root)
-First need to install Elastic Beanstalk cli from https://github.com/aws/aws-elastic-beanstalk-cli-setup
-As per the instructions in the aws repo:
+First need to install [Elastic Beanstalk cli](https://github.com/aws/aws-elastic-beanstalk-cli-setup). As per the instructions in the aws repo:
 
 * first git clone the repo
 
@@ -222,8 +220,7 @@ e.g.
 
 #### Deploy Flask Application to Elastic Beanstalk
 
-Following resources are created and managed by AWS Elastic Beanstalk during deployment
-https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html
+Following resources are created and managed by AWS Elastic Beanstalk during deployment as described in the [docs](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html)
 :
 
 * EC2 instance and Load balancer including security groups
@@ -233,14 +230,13 @@ https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flas
 * AWS CloudFormation stack
 * Domain name
 
-We can deploy the application with selected vpc and subnets already created and vpc security group
-https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-create.html
+We can [deploy](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-create.html) the application with selected vpc and subnets already created and vpc security group
 
 ```
 (virt) (base) rk1103@Ryans-MacBook-Air eb-flask %  eb create eb-flask  --vpc.id vpc-04fbebf4ff05101c6 --vpc.elbpublic --vpc.ec2subnets subnet-0b9a8d47f89cf7849,subnet-0802014b04846f0ed --vpc.securitygroup sg-0808c1d97bf20a775
 ```
 
-<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/ELB-cli-create-application-logs.png></img>
+![](../../screenshots/ELB-cli-create-application-logs.png) 
 
 
 The EC2 instance created by eb, does not automatically have an elastic IP associated so it can
@@ -277,9 +273,14 @@ Go to connect -> SSH client for instructions on how to ssh into the instance as 
 
 When the environment creation process completes, open your web site with `eb open` from cli.
 This will open a browser  using the domain name created for your application
-https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html
 
 To terminate the application and automatically teardown the resources, first remove the inbound rule in RDS security group
 which references EB security group. Then run `eb terminate eb-flask`
 
-<img src=https://github.com/ryankarlos/AWS-VPC/blob/master/screenshots/ELB-terminate-eb-application.png></img>
+![](../../screenshots/ELB-terminate-eb-application.png) 
+
+### References
+
+1. https://github.com/aws/aws-elastic-beanstalk-cli-setup
+2. 
+
