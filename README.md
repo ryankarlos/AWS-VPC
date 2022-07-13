@@ -4,7 +4,7 @@
 This project is meant to give a basic overview of AWS Vitual Private Cloud (VPC) and the different options available for securing the applications and infrastructure
 in the cloud, depending on the use case. 
 
-The material below can also be viewed in [Github Pages](https://ryankarlos.github.io/AWS-VPC/) or [Github](https://github.com/ryankarlos/AWS-VPC/edit/master/README.md)
+The material below can also be viewed in [Github Pages](/) or [Github](https://github.com/ryankarlos/AWS-VPC)
 
 ## Table of Contents
 
@@ -89,7 +89,7 @@ While creating Interface endpoint, It will allow you to choose a subnet from you
 endpoint network interface in the subnet and assign it a private IP address from the subnet address range.
 A private IP address also ensures the traffic remains private without any changes to the route table.
 **AWS recently enabled AWS PrivateLink support for S3 and DynamoDB service**. So, We can use Interface endpoint for S3 and DynamoDB service as well.
-For Interface endpoints, You are billed for hourly usage and data processing charges. https://aws.amazon.com/privatelink/pricing/
+For Interface endpoints, there is a cost for hourly usage and data processing charges (see [pricing](shttps://aws.amazon.com/privatelink/pricing/)), compared to gateway endpoint.
 Interface endpoint has its own set of DNS names, including one for AZ, region and private DNS name.
 You can use regional (or) AZ level DNS name as well to access your Interface endpoint. Normally, DNS name of the AWS service resolves to regional Public IPs. When you enable 'private DNS name' for the interface endpoint, DNS name of Secrets manager service will start resolve to private IPs.
 In comparison, Gateway Endpoints described above are limited to providing connectivity to Amazon S3 and DynamoDB service only and they do not leverage AWS PrivateLink.
