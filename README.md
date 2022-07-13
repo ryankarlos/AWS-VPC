@@ -1,5 +1,5 @@
 
-# Understanding VPC terminology with example workflows
+# Understanding VPC terminology with example AWS workflows
 
 A VPC is basically a virtual network segment that is provided to AWS customers in our cloud, similar to a traditional
 network that you'd operate in your on-prem infra or data center [1]. Naturally, a network would come with subnets which are
