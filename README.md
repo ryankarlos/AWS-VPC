@@ -89,17 +89,11 @@ In comparison, Gateway Endpoints described above are limited to providing connec
 Now, further access for IP's is controlled individually at each instance level by means of Security Group (SG).
 SG's are discussed in reference [5]
 
-#### References
-1) https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html
-2) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html
-3) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html
-4) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html
-5) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
 
+For the next sections, we will setup the environment and create AWS resources in different VPC before running example workflows using 
+to deploy webserver in EC2 instance in a VPC which communicates with RDS instance in same VPC and Redshift in a different VPC using some of the resources 
+described in this section. We will also create a batch job to update the RDS instance, and will get triggered when data in S3 is updated.
 
-This repo shows examples of AWS options for configuring VPC and allowing network traffic to internet
-and other services. We will deploy a flask application in ec2 instance in VPC and communicate with RDS instance in same VPC
-and Redshift in separate VPC.
 
 #### Setup venv
 
@@ -300,9 +294,28 @@ If there is an error, then check the reason in the 'events' tab of the child sta
  ![](screenshots/Nested-Stack-console.png) 
 
 
+#### Example workflows
+
+Once the resources are created, we can run the following example workflows:
+
+1. **Deploy a flask application in ec2 instance in VPC and communicate with RDS instance in same VPC
+and Redshift in separate VPC**. Click [here](aws_vpc)
+2. **Using Elastic Beanstalk to automate webserver deployment**. Click [here](/aws_vpc/aws-flask)
+3. **Using AWS Batch to update data in RDS instance**. Click [here](aws_vpc/batch)
+
+
+#### References
+1) https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html
+2) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html
+3) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html
+4) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html
+5) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+
+
+
 ### Credits
 
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+The github repo was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
