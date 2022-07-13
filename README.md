@@ -4,7 +4,7 @@
 This project is meant to give a basic overview of AWS Vitual Private Cloud (VPC) and the different options available for securing the applications and infrastructure
 in the cloud, depending on the use case. 
 
-The material below can also be viewed in [Github Pages](/) or [Github](https://github.com/ryankarlos/AWS-VPC)
+The material below can also be viewed in [Github Pages](https://ryankarlos.github.io/AWS-VPC/) or [Github](https://github.com/ryankarlos/AWS-VPC)
 
 ## Table of Contents
 
