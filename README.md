@@ -1,6 +1,22 @@
 
 # Understanding VPC terminology with example AWS workflows
 
+This project is meant to give a basic overview of AWS Vitual Private Cloud (VPC) and the different options available for securing the applications and infrastructure
+in the cloud, depending on the use case. 
+
+The material below can also be viewed in [Github Pages](https://ryankarlos.github.io/AWS-VPC/)
+
+## Table of Contents
+
+1. [Basics](#Basics)
+2. [Setup Virtual Environment](#Setup Virtual Environment)
+3. [Create Resources using CloudFormation](#Create AWS resource using CloudFormation)
+4. [Example Workflows](#Example Workflows)
+5. [References](#References)
+
+
+## Basics
+
 A VPC is basically a virtual network segment that is provided to AWS customers in our cloud, similar to a traditional
 network that you'd operate in your on-prem infra or data center [1]. Naturally, a network would come with subnets which are
 logical divisions of the same. You can have a single subnet or multiple subnets depending on your need. In AWS, we
@@ -8,8 +24,9 @@ classify the subnet further as a "Public" or "Private" subnet. The most basic di
 instances in a "public" subnet, we can talk "back" to them from internet, while instances in "private" subnet are
 unreachable from the internet. See AWS references [2,3]
 
-Also, "public" and "private" are just nomenclature or logical names used for subnets. The "thing" that makes a subnet
-public is an AWS solution called as "Internet Gateway" (lets denote this 'IGW' for future reference). As per AWS docs, an
+### Internet Gateway
+
+The AWS solution that makes a subnet public is called as "Internet Gateway" (lets denote this 'IGW' for future reference). As per AWS docs, an
 IGW enables resources (like EC2 instances) in your public subnets to connect to the internet if the resource has a public
 IPv4 address or an IPv6 address. Similarly, resources on the internet can initiate a connection to resources in your
 subnet using the public IPv4 address or IPv6 address. IGW basically serves two purposes: to provide a target in your
@@ -19,6 +36,8 @@ for instances that have been assigned public IPv4 addresses. For this to be poss
 one can connect back to a public instance from internet using the Elastic IP or auto-assigned public IP configured in
 instance configuration. IGW is discussed in [4].
 
+### NAT Gateway
+
 Now, instances in a "private" subnet wont have any routes pointing their default gateway to an IGW (else they wont be
 called private). Thus, they wont be able to talk out to the internet. However, there are scenarios where instances in
 "private" subnets would need internet access (say for performing updates). This is where NAT gateway (lets denote this 'NGW'
@@ -27,15 +46,19 @@ VPC, however, external services cannot initiate a connection with those instance
 of the instances with the IP address of the NAT gateway. Thus, for private instances to be able to talk to internet,
 the NGW associated with them should itself be in a "public" subnet. The internet flow then looks like below:
 
-(Private Instance) ----> NGW -----> IGW ---> Internet
+**(Private Instance) ----> NGW -----> IGW ---> Internet**
+
+### VPC to VPC connectivity
 
 We will also have scenarios where we would need instances in one VPC to talk to other instances in a different VPC in
 same or different AWS accounts. This can be achieved by means of solutions like "VPC Peering Connection" or a "AWS
 Transit Gateway". At the core of it, you would basically have a route for remote VPC subnet with the "gateway" pointing
 to either a VPC peering connection or Transit GW as appropriate.
 A VPC peering connection is a networking connection between two VPCs that enables you to route traffic between them using private IPv4 addresses
-or IPv6 addresses. Instances in either VPC can communicate with each other as if they are within the same network. You can create a VPC peering connection between your own VPCs, or with a VPC in another AWS account.
-The VPCs can be in different regions (also known as an inter-region VPC peering connection).
+or IPv6 addresses. Instances in either VPC can communicate with each other as if they are within the same network. You can create a VPC peering connection between your own VPCs, or with a VPC in another AWS account.The VPCs can be in different regions (also known as an inter-region VPC peering connection).
+
+
+### VPC Endpoints
 
 Now, apart from VPC, we have multiple other AWS provided solutions (like RDS, S3, etc). These services are usually reachable from internet. However,
 AWS also allows you to privately connect your VPC to supported AWS services without requiring an internet gateway, NAT device,
@@ -43,61 +66,39 @@ VPN connection, or AWS Direct Connect connection. This is achieved by means of "
 Endpoints are virtual devices that are horizontally scaled, redundant, and highly available VPC components. V
 PC endpoints allow communication between instances in your VPC and services, without imposing availability risks or
 bandwidth constraints on your network traffic. You can optimize the network path by avoiding traffic to internet gateways
-and incurring cost associated with NAT gateways, NAT instances or maintaining firewalls. VPC endpoints also provide you with much finer control over how users and applications access AWS services.
-With VPC endpoints enabled, Instances in your VPC do not require public IP addresses to communicate with the Amazon services. Traffic between your VPC resources and the Amazon service (For ex: SQS, Secrets manager etc) does not leave the Amazon network.
-VPC endpoints allows you to connect Amazon services only within the region.
+and incurring cost associated with NAT gateways, NAT instances or maintaining firewalls. VPC endpoints also provide you with much finer control over how users and applications access AWS services. With VPC endpoints enabled, Instances in your VPC do not require public IP addresses to communicate with the Amazon services. Traffic between your VPC resources and the Amazon service (For ex: SQS, Secrets manager etc) does not leave the Amazon network. VPC endpoints allows you to connect Amazon services only within the region.
 
-There are two types of VPC endpoints.
+There are two types of VPC endpoints, Gateway Endpoints and Interface Endpoints.
 
-1. A Gateway endpoint is a target for a route in a route table to connect VPC resources to S3 or DynamoDB. When enabled, the route table automatically updates the prefix list of service and target endpoints.
-Gateway endpoint is created at the VPC level and not at the subnet level. A route is automatically added to the Route table with a destination that specifies the prefix list of service and the target with the endpoint id for e.g. A rule
-   with destination pl-68a54001 (com.amazonaws.us-west-2.s3) and a target with this endpoints’ ID (e.g. vpce-12345678) will be added to the route tables
-A Gateway endpoint, currently allows you to connect to Amazon Simple Storage Service (S3) and Amazon DynamoDB service using private IP addresses. You route traffic from your VPC to the gateway endpoint using route tables. Gateway endpoints do not enable AWS PrivateLink.
-You can also configure resource policies on both the gateway endpoint and the AWS resource that the endpoint provides access to. A VPC endpoint policy is an AWS Identity and Access Management (AWS IAM) resource policy that you can attach to an endpoint. It is a separate policy
-   for controlling access from the endpoint to the specified service. This enables granular access control and private network connectivity from within a VPC.
-Note: As mentioned above, Gateway endpoints are available only for Amazon S3 and Amazon DynamoDB services, and they are available at no additional cost. Gateway endpoints can only be used by the resources within the VPC.
+#### Gateway endpoint
+Target for a route in a route table to connect VPC resources to S3 or DynamoDB. When enabled, the route table automatically updates the prefix list of service and target endpoints. Gateway endpoint is created at the VPC level and not at the subnet level. A route is automatically added to the Route table with a destination that specifies the prefix list of service and the target with the endpoint id for e.g. A rule with destination pl-68a54001 (com.amazonaws.us-west-2.s3) and a target with this endpoints’ ID (e.g. vpce-12345678) will be added to the route tables. A Gateway endpoint, currently allows you to connect to Amazon Simple Storage Service (S3) and Amazon DynamoDB service using private IP addresses. You route traffic from your VPC to the gateway endpoint using route tables. Gateway endpoints **do not enable AWS PrivateLink**.
+You can also configure resource policies on both the gateway endpoint and the AWS resource that the endpoint provides access to. A VPC endpoint policy is an AWS Identity and Access Management (AWS IAM) resource policy that you can attach to an endpoint. It is a separate policy for controlling access from the endpoint to the specified service. This enables granular access control and private network connectivity from within a VPC.
+**Note**: As mentioned above, Gateway endpoints are available only for Amazon S3 and Amazon DynamoDB services, and they are available at no additional cost. Gateway endpoints can only be used by the resources within the VPC.
 
-* Limitations:
+There are a few limitations associated with Gateway Endpoints, namely:
 
-1) Endpoints are supported within the same Region only. Endpoint cannot be created between a VPC and an AWS service in a different region.
-2) Endpoints support IPv4 traffic only.
-3) Endpoint cannot be transferred from one VPC to another, or from one service to another
-4) Endpoint connections cannot be extended out of a VPC i.e. resources across the VPN connection, VPC peering connection, AWS Direct Connect connection cannot use the endpoint.
+* Endpoints are supported within the same Region only. Endpoint cannot be created between a VPC and an AWS service in a different region.
+* Endpoints support IPv4 traffic only.
+* Endpoint cannot be transferred from one VPC to another, or from one service to another
+* Endpoint connections cannot be extended out of a VPC i.e. resources across the VPN connection, VPC peering connection, AWS Direct Connect connection cannot use the endpoint.
 
-2. Interface endpoints
-
-Interface endpoints enable connectivity to services over AWS PrivateLink. WS PrivateLink is a service which basically provides Amazon VPCs with a secure and scalable way to privately connect
-to such hosted services. AWS PrivateLink traffic does not use public IP addresses nor traverse the internet.
+#### Interface endpoints
+Interface endpoints **enable connectivity to services over AWS PrivateLink**. AWS PrivateLink is a service which basically provides Amazon VPCs with a secure and scalable way to privately connectto such hosted services. AWS PrivateLink traffic does not use public IP addresses nor traverse the internet.
 The Interface endpoints reside inside a subnet and need to be in an Availability Zone (for HA, put one in each AZ)
 While creating Interface endpoint, It will allow you to choose a subnet from your VPC. For each subnet that you specify from your VPC, we create an
 endpoint network interface in the subnet and assign it a private IP address from the subnet address range.
 A private IP address also ensures the traffic remains private without any changes to the route table.
-AWS recently enabled AWS PrivateLink support for S3 and DynamoDB service. So, We can use Interface endpoint for S3 and DynamoDB service as well.
+**AWS recently enabled AWS PrivateLink support for S3 and DynamoDB service**. So, We can use Interface endpoint for S3 and DynamoDB service as well.
 For Interface endpoints, You are billed for hourly usage and data processing charges. https://aws.amazon.com/privatelink/pricing/
 Interface endpoint has its own set of DNS names, including one for AZ, region and private DNS name.
-You can use regional (or) AZ level DNS name as well to access your Interface endpoint.
-For Example consider secret manager service:
-
-vpce-08e129ac470yyyyyy-xxxxxx.secretsmanager.us-east-1.vpce.amazonaws.com  --> Regional DNS Name
-vpce-08e129ac470yyyyyy-xxxxxx-us-east-1a.secretsmanager.us-east-1.vpce.amazonaws.com  ---> Zonal DNS name
-secretsmanager.us-east-1.amazonaws.com   ---> DNS Name of Secrets manager service in us-east-1 region
-
-Normally, DNS name of the AWS service resolves to regional Public IPs. When you enable 'private DNS name' for the interface endpoint, DNS name of Secrets manager service will start resolve to private IPs.
+You can use regional (or) AZ level DNS name as well to access your Interface endpoint. Normally, DNS name of the AWS service resolves to regional Public IPs. When you enable 'private DNS name' for the interface endpoint, DNS name of Secrets manager service will start resolve to private IPs.
 In comparison, Gateway Endpoints described above are limited to providing connectivity to Amazon S3 and DynamoDB service only and they do not leverage AWS PrivateLink.
 
 
-Now, further access for IP's is controlled individually at each instance level by means of Security Group (SG).
-SG's are discussed in reference [5]
+Further access for IP's is controlled individually at each instance level by means of Security Group (SG). SG's are discussed in reference [5]
+For the next sections, we will first setup a local environment and then use **cloudformation** to create  VPC, subnets, route tables, security groups, VPC endpoints and associate with RDS,Redshift and EC2 resources before running the following **example workflows**.
 
-
-For the next sections, we will first setup a local environment and then use **cloudformation** to create  VPC, subnets, route tables, security groups, VPC endpoints and associate with RDS,Redshift and EC2 resources before running the following **example workflows**:
-
-1. [**Deploy webserver**](aws_vpc) in EC2 instance in a VPC which communicates with RDS instance in same VPC and Redshift in a different VPC using some of the resources described in this section
-2. [**Use Elastic Beanstalk**](aws_vpc/aws-flask) to automate webserver deployment.
-3. [**Use AWS Batch**](aws_vpc/batch) to update the RDS instance, and will get triggered when data in S3 is updated.
-
-
-#### Setup venv
+## Setup Virtual Environment
 
 First `cd` to the `eb-flask` folder in `aws-vpc` and then run the following command to setup a virtual env named `virt` and activate it
 
@@ -139,7 +140,7 @@ Werkzeug==2.1.0
 ```
 
 
-#### Create AWS resource using CloudFormation
+## Create AWS resource using CloudFormation
 
 The AWS Cloudformation templates are stored in `templates` folder. Apart from the template `vpc.yaml`, the rest are arranged in a heirarchy (nested stacks) where the root stack `nested-stack.yaml`
 is the  top level stack referencing the other nested stacks (`redshift.yaml`,`rds-resource.yaml`, `batch-job.yaml`, `code-deploy.yaml`, `ec2.yaml`). More info about nested stacks in the AWS docs https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html
@@ -296,7 +297,14 @@ If there is an error, then check the reason in the 'events' tab of the child sta
  ![](screenshots/Nested-Stack-console.png) 
 
 
-#### References
+## Example Workflows
+
+1. [**Deploy webserver**](aws_vpc) in EC2 instance in a VPC which communicates with RDS instance in same VPC and Redshift in a different VPC using some of the resources described in this section
+2. [**Use Elastic Beanstalk**](aws_vpc/aws-flask) to automate webserver deployment.
+3. [**Use AWS Batch**](aws_vpc/batch) to update the RDS instance, and will get triggered when data in S3 is updated.
+
+
+## References
 1) https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html
 2) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html
 3) https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html
@@ -305,7 +313,7 @@ If there is an error, then check the reason in the 'events' tab of the child sta
 
 
 
-### Credits
+## Credits
 
 The github repo was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
