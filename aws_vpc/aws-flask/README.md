@@ -278,9 +278,3 @@ To terminate the application and automatically teardown the resources, first rem
 which references EB security group. Then run `eb terminate eb-flask`
 
 ![](../../screenshots/ELB-terminate-eb-application.png) 
-
-### References
-
-1. https://github.com/aws/aws-elastic-beanstalk-cli-setup
-2. 
-
