@@ -150,6 +150,6 @@ We can track the status of past deployments for this application in  CodeDeploy 
 ![](../screenshots/code-deploy-deployment-group-status.png)
 
 <p align="center">
-    <a href="../README.md">Home</a>  
+    <a href="https://ryankarlos.github.io/AWS-VPC/">Home</a>  
 </p>
 
