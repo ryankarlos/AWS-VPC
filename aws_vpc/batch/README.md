@@ -114,5 +114,7 @@ Once the job is submitted to the batch queue it will enter SUBMITTED state and w
 1. https://docs.aws.amazon.com/batch/latest/userguide/what-is-batch.html
 2. https://docs.aws.amazon.com/batch/latest/userguide/job_states.html
 
+<p align="center">
+    <a href="../../README.md">Home</a>  
+</p>
 
-[HomePage](../../README.md)
