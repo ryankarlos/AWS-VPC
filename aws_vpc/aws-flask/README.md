@@ -280,6 +280,6 @@ which references EB security group. Then run `eb terminate eb-flask`
 ![](../../screenshots/ELB-terminate-eb-application.png) 
 
 <p align="center">
-    <a href="../../README.md">Home</a>  
+    <a href="https://ryankarlos.github.io/AWS-VPC/">Home</a>  
 </p>
 
