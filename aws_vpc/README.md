@@ -8,7 +8,7 @@ DB instance and the web server to communicate. After the VPC is set up, this tut
 the DB instance and install the web server. You connect your web server to your DB instance in the VPC using
 the DB instance endpoint endpoint.
 
-This example is based on the [tutorials](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Tutorials.WebServerDB.CreateVPC.html#CHAP_Tutorials.WebServerDB.CreateVPC.VPCAndSubnets) in AWS docs 
+This example is based on the [tutorials](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Tutorials.WebServerDB.CreateVPC.html#CHAP_Tutorials.WebServerDB.CreateVPC.VPCAndSubnets) in AWS docs, but uses a more programmatic approach for illustration.
 
 We will need the following requirements:
 1) Web server hosted in EC2 instance
@@ -19,12 +19,10 @@ We will need the following requirements:
 
 ### Running application locally
 
-Assuming you are in the virutal env `virt` setup in `../README.md` , run `python application.py`
-as below, which should show the address the server is running on. Navigate to this .e.g
-[http://127.0.0.1:5000](http://127.0.0.1:5000) as in logs below
+Assuming the virutal enviornment `venv` has been setup as described in this [section](../README.md#setup-virtual-environment) , run the [application.py](https://github.com/ryankarlos/AWS-VPC/blob/master/aws_vpc/aws-flask/application.py) script from the command line as below. This should show the address the server is running on. Navigate to this .e.g[http://127.0.0.1:5000](http://127.0.0.1:5000) as in logs below
 
 ```
-(virt) (base) $ python application.py
+(venv) $ python application.py
 
  * Serving Flask app 'application' (lazy loading)
  * Environment: production
