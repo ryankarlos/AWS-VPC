@@ -148,3 +148,8 @@ If the email is entered incorrectly, then an error is returned
 We can track the status of past deployments for this application in  CodeDeploy deployment group
 
 ![](../screenshots/code-deploy-deployment-group-status.png)
+
+<p align="center">
+    <a href="../README.md">Home</a>  
+</p>
+
