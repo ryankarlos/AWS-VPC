@@ -1,10 +1,8 @@
 
 # Understanding VPC terminology with example AWS workflows
 
-This project is meant to give a basic overview of AWS Vitual Private Cloud (VPC) and the different options available for securing the applications and infrastructure
-in the cloud, depending on the use case. 
+This blog is meant to give a basic overview of AWS Vitual Private Cloud (VPC) and the different options available for securing the applications and infrastructure in the cloud, depending on the use case. It will also illustrate some of these concepts via practical examples of workflows using diffrent AWS services.
 
-The material below can also be viewed in [Github Pages](https://ryankarlos.github.io/AWS-VPC/) or [Github](https://github.com/ryankarlos/AWS-VPC)
 
 ## Table of Contents
 
@@ -100,50 +98,26 @@ For the next sections, we will first setup a local environment and then use **cl
 
 ## Setup Virtual Environment
 
-First `cd` to the `eb-flask` folder in `aws-vpc` and then run the following command to setup a virtual env named `virt` and activate it
+For the practical examples, we will reference the source code in this [Github](https://github.com/ryankarlos/AWS-VPC) repository.
+First `cd` to the `eb-flask` folder in `aws-vpc` and then run the following command to setup a virtual env named `venv` and activate it
 
 ```
-$ virtualenv virt
-created virtual environment CPython3.9.1.final.0-64 in 2870ms
-  creator CPython3Posix(dest=/Users/rk1103/Documents/AWS-VPC/aws_vpc/eb-flask/virt, clear=False, no_vcs_ignore=False, global=False)
-  seeder FromAppData(download=False, pip=bundle, setuptools=bundle, wheel=bundle, via=copy, app_data_dir=/Users/rk1103/Library/Application Support/virtualenv)
-    added seed packages: pip==22.0.4, setuptools==62.2.0, wheel==0.37.1
-  activators BashActivator,CShellActivator,FishActivator,PowerShellActivator,PythonActivator,XonshActivator
-(base) rk1103@Ryans-MacBook-Air eb-flask % source virt/bin/activate
+$ python3 -m venv venv
+$ source venv/Scripts/activate
 ```
 
 Install the dependencies from the `requirements.txt` file in `eb-flask` folder. If you want to install the development
 dependencies then install from `requirements_dev.txt`
 
 ```
-(virt) (base) $ pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
-
-To view installed dependencies in the environment run `pip freeze`
-
-```
-(virt) (base) $ pip freeze
-
-boto3==1.24.2
-botocore==1.27.2
-click==7.1.2
-Flask==2.0.3
-itsdangerous==2.1.2
-Jinja2==3.1.1
-jmespath==1.0.0
-MarkupSafe==2.1.1
-python-dateutil==2.8.2
-s3transfer==0.6.0
-six==1.16.0
-urllib3==1.26.9
-Werkzeug==2.1.0
-```
-
 
 ## Create AWS resource using CloudFormation
 
-The AWS Cloudformation templates are stored in `templates` folder. Apart from the template `vpc.yaml`, the rest are arranged in a heirarchy (nested stacks) where the root stack `nested-stack.yaml`
-is the  top level stack referencing the other nested stacks (`redshift.yaml`,`rds-resource.yaml`, `batch-job.yaml`, `code-deploy.yaml`, `ec2.yaml`). More info about nested stacks in the AWS docs https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html
+The AWS Cloudformation templates are stored in [templates](https://github.com/ryankarlos/AWS-VPC/tree/master/templates) folder. Apart from the template `vpc.yaml`, the rest are arranged in a heirarchy (nested stacks) where the root stack `nested-stack.yaml`
+is the  top level stack referencing the other nested stacks (`redshift.yaml`,`rds-resource.yaml`, `batch-job.yaml`, `code-deploy.yaml`, `ec2.yaml`). More info about [nested stacks](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html
+) in the AWS docs.
 
 Root stack `nested-stack.yaml` uses the AWS::CloudFormation::Stack resource to reference the child stack template containing the required resouce configuration,
 with a `DeletionPolicy::Retain`. The nested AWS::CloudFormation::Stack definition in the parent stack template matches the actual nested stack's template
@@ -160,10 +134,9 @@ $ aws cloudformation validate-template --template-body file://templates/redshift
 An error occurred (ValidationError) when calling the ValidateTemplate operation: Template format error: Unrecognized parameter type: Bool
 ```
 
-First we need to create the vpc resources from `vpc.yaml`. We can use the command below https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html or do this from the console.
-https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html
+First we need to create the vpc resources from `vpc.yaml`. We can do this via cli as below or from the [console](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html)
 
-```Shell
+```bash
 aws cloudformation create-stack \
 --stack-name non-default-vpc \
 --template-body "file://${repo_root}/templates/vpc.yaml" \
@@ -201,15 +174,13 @@ The interface endpoint (powered by AWS PrivateLink) is configured for Secrets Ma
 
 ![](screenshots/vpc-endpoints.png) 
 
-
-we can also analyse the route between source and destination https://docs.aws.amazon.com/vpc/latest/reachability/getting-started.html
+we can also analyse the route between source and destination [6]
 and see if it is reachable with new configuration. e.g. below  we have created a route between Ec2 instance and VPC peering connection and analysed the path. if the route table and security  groups were congiured correctly, then there should be a successful path as analysed below
 
 ![](screenshots/reachability-analysis-vpc-peering.png) 
 
-
 Running the bash script create_stacks.sh  will create all the nested stacks and root stack,
-using the create-stack action for cloudformation via cli https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html
+using the [create-stack action](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html) for cloudformation via cli 
 Prior to doing this, it will also copy all the child stack templates to S3 bucket as these paths are referenced in the root template.
 When running the command below, replace <username> and <password> with the required usernames and passwords you wish to set for redhsift cluster and rds db instance
 respectively. <ip> should be the client ip you wish to grant access to the db (must be of the format 191.255.255.255/24). Note the trailing
@@ -221,45 +192,13 @@ creating these - then set these to false (as in command below)
 
 ```
 $ sh aws_vpc/create_stacks.sh <username> <password> <ip> <path-to-gh-repo-root> false false
-
-Uploading templates to s3:
-upload: templates/redshift.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/redshift.yaml
-upload: templates/code-deploy.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/code-deploy.yaml
-upload: templates/batch-job.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/batch-job.yaml
-upload: templates/rds-resource.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/rds-resource.yaml
-upload: templates/nested-stack.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/nested-stack.yaml
-upload: templates/ec2.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/ec2.yaml
-upload: templates/vpc.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/vpc.yaml
-
-Creating nested stacks:
-
-{
-    "StackId": "<arn>"
-}
 ```
-
 
 To update nested stacks if parameters of root stack have not changed, run the following
 update script - passing in the root of the gh repo as the first arg.
 
 ```
 sh aws_vpc/update_stacks.sh <repo-root>
-
-Uploading templates to s3:
-upload: templates/redshift.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/redshift.yaml
-upload: templates/code-deploy.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/code-deploy.yaml
-upload: templates/batch-job.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/batch-job.yaml
-upload: templates/rds-resource.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/rds-resource.yaml
-upload: templates/nested-stack.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/nested-stack.yaml
-upload: templates/ec2.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/ec2.yaml
-upload: templates/vpc.yaml to s3://cf-templates-wnxns0c4jjl4-us-east-1/vpc.yaml
-
-Updating nested stacks:
-
-{
-    "StackId": "arn:aws:cloudformation:<REGION>:<ACCOUNT-ID>:stack/Nested-RDS-Redshift-EC2-VPC/9070c9e0-ecfb-11ec-9503-0a897404d5d5"
-}
-
 ```
 
 To teardown the cloudformation stacks run the teardown.sh bash script. This assumes the root stack name
@@ -267,17 +206,6 @@ is `Nested-RDS-Redshift-EC2-VPC`
 
 ```
 $ sh aws_vpc/teardown.sh
-
-Deleting stack "Nested-RDS-Redshift-EC2-VPC-NestedRDSStack-BSEMIHK53ZLW",
-
-Deleting stack "Nested-RDS-Redshift-EC2-VPC-NestedRedshiftStack-AFT0JOJNX7YV",
-
-Deleting stack "Nested-RDS-Redshift-EC2-VPC-NestedEC2Stack-CH12LH075898",
-
-Deleting stack "Nested-RDS-Redshift-EC2-VPC-NestedVPCStack-1BIMJOPPQGS81",
-
-Deleting stack "Nested-RDS-Redshift-EC2-VPC",
-
 ```
 
  Alternatively, from the console:
@@ -305,12 +233,13 @@ If there is an error, then check the reason in the 'events' tab of the child sta
 
 
 ## References
-1. https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html
-2. https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html
-3. https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html
-4. https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html
-5. https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
 
+1. [https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html](https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html)
+2. [https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html)
+3. [https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html)
+4. [https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html)
+5. [https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html)
+6. [https://docs.aws.amazon.com/vpc/latest/reachability/getting-started.html](https://docs.aws.amazon.com/vpc/latest/reachability/getting-started.html)
 
 
 ## Credits
