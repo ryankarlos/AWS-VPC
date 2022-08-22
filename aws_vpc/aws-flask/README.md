@@ -11,32 +11,19 @@ security group associated with Elastic DB instance. Although as mentioned in the
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/, this will create a dependency between EB and RDS
 security groups which means that we would need to delete this inbound rule before terminating EB application
 and all the resources. AWSHowTo.RDS.html
-The next few sections, will follow this [tutorial](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html) in AWS docs 
+The next few sections, will follow this [tutorial](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html) in AWS docs
 with some modifications where we will also have a Redshift cluster in same VPC, and configure security group inbound rules to allow the EC2 instances in the EB environment to communciate with Redshift cluster and vice versa.
 
-![](../../screenshots/elastic_beanstalk_deploy_flask.png) 
+![](../../screenshots/elastic_beanstalk_deploy_flask.png)
 
 #### Installing and configuring Elastic Beanstalk cli
 
 Assuming the other resources are created and active (instructions in `README.md` at repo root)
 First need to install [Elastic Beanstalk cli](https://github.com/aws/aws-elastic-beanstalk-cli-setup). As per the instructions in the aws repo:
 
-* first git clone the repo
+* First git clone the repo and then run the installer script. You should see the stdout as below
 
-```
-$ git clone https://github.com/aws/aws-elastic-beanstalk-cli-setup.git
-Cloning into 'aws-elastic-beanstalk-cli-setup'...
-remote: Enumerating objects: 318, done.
-remote: Counting objects: 100% (23/23), done.
-remote: Compressing objects: 100% (14/14), done.
-remote: Total 318 (delta 6), reused 17 (delta 6), pack-reused 295
-Receiving objects: 100% (318/318), 530.52 KiB | 22.10 MiB/s, done.
-Resolving deltas: 100% (169/169), done.
-```
-
-* Then run the installer script. You should see the stdout as below
-
-```
+```shell
 $ python ./aws-elastic-beanstalk-cli-setup/scripts/ebcli_installer.py
 
 ***********************************
@@ -200,7 +187,7 @@ Success!
 * As per the last bit in the output above which contains instructions on how to add the executable to
 $PATH
 
-```
+```shell
 echo 'export PATH="/Users/rk1103/.ebcli-virtual-env/executables:$PATH"' >> ~/.bash_profile && source ~/.bash_profile
 ```
 
@@ -232,11 +219,11 @@ Following resources are created and managed by AWS Elastic Beanstalk during depl
 
 We can [deploy](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-create.html) the application with selected vpc and subnets already created and vpc security group
 
-```
-(virt) (base) rk1103@Ryans-MacBook-Air eb-flask %  eb create eb-flask  --vpc.id vpc-04fbebf4ff05101c6 --vpc.elbpublic --vpc.ec2subnets subnet-0b9a8d47f89cf7849,subnet-0802014b04846f0ed --vpc.securitygroup sg-0808c1d97bf20a775
+```shell
+$ eb create eb-flask  --vpc.id vpc-04fbebf4ff05101c6 --vpc.elbpublic --vpc.ec2subnets subnet-0b9a8d47f89cf7849,subnet-0802014b04846f0ed --vpc.securitygroup sg-0808c1d97bf20a775
 ```
 
-![](../../screenshots/ELB-cli-create-application-logs.png) 
+![](../../screenshots/ELB-cli-create-application-logs.png)
 
 
 The EC2 instance created by eb, does not automatically have an elastic IP associated so it can
@@ -251,9 +238,10 @@ assign an Elastic IP to the instance.
 You should now see public ip4 address visible in the instance summary.
 Go to connect -> SSH client for instructions on how to ssh into the instance as below
 
-```
-(virt) (base) rk1103@Ryans-MacBook-Air .ssh %  chmod 400 aws-eb
-(virt) (base) rk1103@Ryans-MacBook-Air .ssh % ssh -i "aws-eb" ec2-user@ec2-18-233-255-138.compute-1.amazonaws.com
+```shell
+$ cd ~/.ssh
+$ chmod 400 aws-eb
+$ ssh -i "aws-eb" ec2-user@ec2-18-233-255-138.compute-1.amazonaws.com
   _____ _           _   _      ____                       _        _ _
  | ____| | __   ___| |_(_) ___| __ )  ___  __ _ _ __  ___| |_ __ _| | | __
  |  _| | |/ _ \/ __| __| |/ __|  _ \ / _ \/ _\ | '_ \/ __| __/ _\ | | |/ /
@@ -277,9 +265,9 @@ This will open a browser  using the domain name created for your application
 To terminate the application and automatically teardown the resources, first remove the inbound rule in RDS security group
 which references EB security group. Then run `eb terminate eb-flask`
 
-![](../../screenshots/ELB-terminate-eb-application.png) 
+![](../../screenshots/ELB-terminate-eb-application.png)
 
 <p align="center">
-    <a href="https://ryankarlos.github.io/AWS-VPC/">Home</a>  
+    <a href="https://ryankarlos.github.io/AWS-VPC/">Home</a>
 </p>
 

@@ -5,20 +5,20 @@ It comprises the following components:
 
 * **Job Definition**: Specifies container properties, environment variables,memory and CPU requirements etc.
  for jobs to run. You can also specify IAM roles for access to other resources [1]
- 
+
 * **Job Queue**:The Batch Job is submitted to a particular job queue, where the job resides until it's
  scheduled onto a compute environment. Each job queue can support either multiple Fargate (spot or on demand)
- or multiple EC2 types  (spot or on demand). The compute environments are used in ascending order depending 
- on the speciifed ordering (1(first) -> 2(next) -> 3(next)).For example, if two compute environments are associated with a job queue, the compute environment with a lower order integer value is tried for job placement first [1]. Also, if 1st CE has instance with 2vCPU and other CE has instance with 4vCPU. If job needs 2vCPU it will start 1st CE until Max VCPU is reached, and then it will start the 2nd CE. On other hand, if job needs more than 2vCPU let’s say 3 or 4 vCPU then it will start the 2nd CE. 
-  
+ or multiple EC2 types  (spot or on demand). The compute environments are used in ascending order depending
+ on the speciifed ordering (1(first) -> 2(next) -> 3(next)).For example, if two compute environments are associated with a job queue, the compute environment with a lower order integer value is tried for job placement first [1]. Also, if 1st CE has instance with 2vCPU and other CE has instance with 4vCPU. If job needs 2vCPU it will start 1st CE until Max VCPU is reached, and then it will start the 2nd CE. On other hand, if job needs more than 2vCPU let’s say 3 or 4 vCPU then it will start the 2nd CE.
+
 * **Compute environments** within a new or existing VPC. AWS Batch efficiently launches, manages, and terminates compute
   types (serverless Fargate or managed EC2)  as needed. You can also manage your own compute environments [1].
 
 In the example below, we will trigger a batch job to uplaod data from S3 into RDS and Redshift
 databases. Once the [cloud formation template instructions](https://github.com/ryankarlos/AWS-VPC#create-aws-resource-using-cloudformation)  have been followed, you should have the batch job definition, queue and compute resources required for this task.  The job definiton should also have the cmd parameters i.e.
 script to execute once the container is deployed and running in ECS Fargate (on demand) compute env.
-Ive chosen [Fargate](https://docs.aws.amazon.com/batch/latest/userguide/fargate.html) rather than EC2 in this example as the job is small and the benefits Fargate provides i.e. not having to provision,configure, or scale clusters of Amazon EC2 instances to run containers. 
-This removes the need to choose server types, decide when to scale your clusters, or optimize cluster packing. 
+Ive chosen [Fargate](https://docs.aws.amazon.com/batch/latest/userguide/fargate.html) rather than EC2 in this example as the job is small and the benefits Fargate provides i.e. not having to provision,configure, or scale clusters of Amazon EC2 instances to run containers.
+This removes the need to choose server types, decide when to scale your clusters, or optimize cluster packing.
 In cloudformation, all that is needed in the configuration is the maximum total vCPU of the jobs running in the Fargate compute environment
 
 Configure cloudtrail to log data events for S3 _PutObject API_ operations in the bucket where the sample data is stored, by following this [link](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html). This means that whenever the data is uploaded to the S3 bucket with the _PutObject API_ operation, it matches the settings for this trail, which will process and log the event.
@@ -33,13 +33,13 @@ definition (i.e. docker image ECR path and script entrypoint)
 We can check the batch dashboard to check the job definiton, compute env and job queue configured and
 status of jobs in job queue.
 
-![](../../screenshots/aws-batch-dashboard.png) 
+![](../../screenshots/aws-batch-dashboard.png)
 
 The image below shows the architecture described above, starting from a user uploading the data to S3,
 which triggers a batch job via EventBridge rule. Batch will then create compute environment and assign
 it the task for running job.
 
-![](../../screenshots/batch-update-db-date-ecs-architecture.png) 
+![](../../screenshots/batch-update-db-date-ecs-architecture.png)
 
 ### Build docker image and push to ECR
 
@@ -48,7 +48,7 @@ ECR. The image uri can then be specified in the batch job definition so it deplo
 with the required dependencies and up to date script for executing the data upload to RDS and Redshift.
 The bash script [ecs-image.sh](https://github.com/ryankarlos/AWS-VPC/blob/master/aws_vpc/batch/ecs-image.sh) will build the docker image from the commands in [dockerfile](https://github.com/ryankarlos/AWS-VPC/blob/master/Dockerfile). We need to specify the AWS account id <ACCT_ID> for creating the correct ECR uri to push to.
 
-````
+````shell
 sh scripts/docker/ecs-image.sh <ACCT_ID>
 
 [+] Building 36.0s (14/14) FINISHED
@@ -95,19 +95,19 @@ In the [CloudTrail console](https://console.amazonaws.cn/cloudtrail/):
 
 1. For Trail name, type a name for the trail.
 2. Select `Create a new S3 bucket` in the Storage Location option
-3. Select`Data event` in Event type. Specify the S3 bucket and the object prefix, so that when an event occurs this object, the trail will log the event. We will choose to log Write events for this resource. 
+3. Select`Data event` in Event type. Specify the S3 bucket and the object prefix, so that when an event occurs this object, the trail will log the event. We will choose to log Write events for this resource.
 4. Create Trail
 
 Now we can create a put event by copying the [sample-data.txt](https://github.com/ryankarlos/AWS-VPC/blob/master/data/sample-data.txt) into s3 bucket path as below.
 
-```bash
+```shell
 aws s3 cp data/sample-data.txt s3://s3-eventbridge-batch/sample-data.txt
 ```
 
-This will log an event in cloudtrail and matched by EventBridge rule which will trigger the batch job. 
+This will log an event in cloudtrail and matched by EventBridge rule which will trigger the batch job.
 Once the job is submitted to the batch queue it will enter SUBMITTED state and will procees through the phases until finally either succeeding or failing [2]. The logs are available when the job is in RUNNING state. The Batch logs show that the Job runs and performs the operation based on the pushed container image. The job uploads data to RDS and Redshift tables
 
-![](../../screenshots/aws-batch-logs.png) 
+![](../../screenshots/aws-batch-logs.png)
 
 ### References
 
@@ -115,6 +115,6 @@ Once the job is submitted to the batch queue it will enter SUBMITTED state and w
 2. https://docs.aws.amazon.com/batch/latest/userguide/job_states.html
 
 <p align="center">
-    <a href="https://ryankarlos.github.io/AWS-VPC/">Home</a>  
+    <a href="https://ryankarlos.github.io/AWS-VPC/">Home</a>
 </p>
 
